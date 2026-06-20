@@ -42,6 +42,7 @@
     renderSnapshot();
     initLiveCounters();
     renderSkyFacts();
+    initInteractiveSky();
     renderLeaders();
     renderSoundtrack();
     renderCinema();
@@ -72,6 +73,29 @@
   }
 
   /* ─── MUSIC CONTROL ─────────────────────────────────────── */
+  window.playMusic = function () {
+    const audio = document.getElementById('bg-music');
+    const toggle = document.getElementById('music-toggle');
+    const icon = document.getElementById('music-icon');
+    if (!audio) return;
+
+    audio.volume = 0.3;
+    audio.play().then(() => {
+      if (toggle) toggle.classList.add('playing');
+      if (icon) icon.textContent = '♪';
+    }).catch(err => {
+      console.warn('Music play failed:', err);
+    });
+  };
+
+  window.pauseMusic = function () {
+    const audio = document.getElementById('bg-music');
+    const toggle = document.getElementById('music-toggle');
+    if (!audio) return;
+    audio.pause();
+    if (toggle) toggle.classList.remove('playing');
+  };
+
   function initMusicControl() {
     const toggle = document.getElementById('music-toggle');
     const audio = document.getElementById('bg-music');
@@ -82,22 +106,13 @@
     // Show the toggle button
     setTimeout(() => toggle.classList.add('visible'), 1000);
 
-    let isPlaying = false;
     let userInteracted = false;
 
     // Try to play on first user interaction
     function tryAutoPlay() {
       if (userInteracted) return;
       userInteracted = true;
-      audio.volume = 0.3;
-      audio.play().then(() => {
-        isPlaying = true;
-        toggle.classList.add('playing');
-        icon.textContent = '♪';
-      }).catch(() => {
-        // Auto-play blocked, that's fine
-        isPlaying = false;
-      });
+      window.playMusic();
       document.removeEventListener('click', tryAutoPlay);
     }
 
@@ -105,18 +120,10 @@
 
     toggle.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (isPlaying) {
-        audio.pause();
-        isPlaying = false;
-        toggle.classList.remove('playing');
-        icon.textContent = '♪';
+      if (!audio.paused) {
+        window.pauseMusic();
       } else {
-        audio.volume = 0.3;
-        audio.play().then(() => {
-          isPlaying = true;
-          toggle.classList.add('playing');
-          icon.textContent = '♪';
-        }).catch(() => {});
+        window.playMusic();
       }
     });
   }
@@ -263,6 +270,142 @@
     });
   }
 
+  /* ─── INTERACTIVE SKY TIMELINE (iPhone Weather Style) ────── */
+  function initInteractiveSky() {
+    const slider = document.getElementById('sky-time-slider');
+    const timeText = document.getElementById('sky-current-time');
+    const statusText = document.getElementById('sky-time-status');
+    const celestialBody = document.getElementById('sky-celestial-body');
+    const sectionSky = document.getElementById('sky');
+    const starCanvas = document.getElementById('star-canvas');
+
+    if (!slider || !timeText || !statusText || !celestialBody || !sectionSky) return;
+
+    const sunSvg = `
+      <svg viewBox="0 0 24 24" width="100%" height="100%">
+        <circle cx="12" cy="12" r="5" fill="#ffeb3b"/>
+        <g stroke="#ffeb3b" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="2" x2="12" y2="4"/>
+          <line x1="12" y1="20" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="4" y2="12"/>
+          <line x1="20" y1="12" x2="22" y2="12"/>
+          <line x1="5" y1="5" x2="6.5" y2="6.5"/>
+          <line x1="17.5" y1="17.5" x2="19" y2="19"/>
+          <line x1="5" y1="19" x2="6.5" y2="17.5"/>
+          <line x1="17.5" y1="6.5" x2="19" y2="5"/>
+        </g>
+      </svg>
+    `;
+
+    const moonSvg = `
+      <svg viewBox="0 0 24 24" width="100%" height="100%">
+        <path d="M12 3a9 9 0 1 0 9 9 9.9 9.9 0 0 1-9-9Z" fill="#f5f0e8"/>
+      </svg>
+    `;
+
+    const centerX = 160;
+    const centerY = 140;
+    const radiusX = 140;
+    const radiusY = 100;
+
+    const skyKeyframes = [
+      { time: 0,    c1: [2, 1, 17],     c2: [9, 7, 40] },
+      { time: 300,  c1: [15, 14, 45],   c2: [58, 28, 77] },
+      { time: 358,  c1: [255, 110, 90],  c2: [254, 180, 120] },
+      { time: 420,  c1: [110, 150, 220], c2: [190, 210, 245] },
+      { time: 720,  c1: [50, 120, 210],  c2: [130, 180, 245] },
+      { time: 1050, c1: [70, 110, 190],  c2: [220, 160, 110] },
+      { time: 1118, c1: [45, 20, 80],    c2: [220, 70, 70] },
+      { time: 1170, c1: [15, 10, 45],    c2: [50, 20, 75] },
+      { time: 1320, c1: [5, 3, 25],      c2: [10, 8, 45] },
+      { time: 1440, c1: [2, 1, 17],     c2: [9, 7, 40] }
+    ];
+
+    function updateSky(minutes) {
+      const hrs = Math.floor(minutes / 60);
+      const mins = Math.floor(minutes % 60);
+      const ampm = hrs >= 12 ? 'PM' : 'AM';
+      const displayHrs = hrs % 12 === 0 ? 12 : hrs % 12;
+      const displayMins = String(mins).padStart(2, '0');
+      timeText.textContent = `${displayHrs}:${displayMins} ${ampm}`;
+
+      const isDay = minutes >= 358 && minutes < 1118;
+      
+      let progress, angle;
+      if (isDay) {
+        progress = (minutes - 358) / (1118 - 358);
+        angle = Math.PI - (progress * Math.PI);
+        celestialBody.innerHTML = sunSvg;
+        celestialBody.className = "sky-celestial-body sun";
+        statusText.textContent = minutes === 720 ? "Midday" : (minutes < 720 ? "Morning" : "Afternoon");
+      } else {
+        let nightProgress;
+        const nightLength = (1440 - 1118) + 358;
+        if (minutes >= 1118) {
+          nightProgress = (minutes - 1118) / nightLength;
+        } else {
+          nightProgress = ((1440 - 1118) + minutes) / nightLength;
+        }
+        angle = Math.PI - (nightProgress * Math.PI);
+        celestialBody.innerHTML = moonSvg;
+        celestialBody.className = "sky-celestial-body moon";
+        statusText.textContent = minutes >= 1118 || minutes < 60 ? "Evening / Dusk" : "Late Night";
+      }
+
+      const x = centerX + radiusX * Math.cos(angle);
+      const y = centerY - radiusY * Math.sin(angle);
+      
+      const leftPct = (x / 320) * 100;
+      const topPct = (y / 160) * 100;
+      celestialBody.style.left = `${leftPct}%`;
+      celestialBody.style.top = `${topPct}%`;
+
+      let k1, k2;
+      for (let i = 0; i < skyKeyframes.length - 1; i++) {
+        if (minutes >= skyKeyframes[i].time && minutes <= skyKeyframes[i+1].time) {
+          k1 = skyKeyframes[i];
+          k2 = skyKeyframes[i+1];
+          break;
+        }
+      }
+
+      const range = k2.time - k1.time;
+      const t = range === 0 ? 0 : (minutes - k1.time) / range;
+
+      const r1 = Math.round(k1.c1[0] + t * (k2.c1[0] - k1.c1[0]));
+      const g1 = Math.round(k1.c1[1] + t * (k2.c1[1] - k1.c1[1]));
+      const b1 = Math.round(k1.c1[2] + t * (k2.c1[2] - k1.c1[2]));
+
+      const r2 = Math.round(k1.c2[0] + t * (k2.c2[0] - k1.c2[0]));
+      const g2 = Math.round(k1.c2[1] + t * (k2.c2[1] - k1.c2[1]));
+      const b2 = Math.round(k1.c2[2] + t * (k2.c2[2] - k1.c2[2]));
+
+      sectionSky.style.background = `linear-gradient(to bottom, rgb(${r1}, ${g1}, ${b1}), rgb(${r2}, ${g2}, ${b2}))`;
+
+      let starOpacity = 0;
+      if (minutes >= 1170 || minutes < 300) {
+        starOpacity = 1.0;
+      } else if (minutes >= 300 && minutes < 358) {
+        starOpacity = 1.0 - (minutes - 300) / (358 - 300);
+      } else if (minutes >= 358 && minutes < 1118) {
+        starOpacity = 0;
+      } else if (minutes >= 1118 && minutes < 1170) {
+        starOpacity = (minutes - 1118) / (1170 - 1118);
+      }
+
+      if (starCanvas) {
+        starCanvas.style.opacity = starOpacity;
+      }
+    }
+
+    slider.addEventListener('input', (e) => {
+      updateSky(parseInt(e.target.value));
+    });
+
+    // Start initial state at 10:00 PM (1320 minutes)
+    updateSky(1320);
+  }
+
   /* ─── RENDER: WORLD LEADERS ─────────────────────────────── */
   function renderLeaders() {
     const grid = document.getElementById('leaders-grid');
@@ -273,7 +416,9 @@
       card.className = 'leader-card reveal-item';
       card.dataset.delay = String(index * 120);
       card.innerHTML = `
-        <div class="leader-emoji">${leader.emoji}</div>
+        <div class="leader-image-container">
+          ${leader.image ? `<img src="${leader.image}" alt="${leader.name}" class="leader-photo-img" loading="lazy">` : `<span class="leader-emoji">${leader.emoji}</span>`}
+        </div>
         <div class="leader-info">
           <div class="leader-title">${leader.title}</div>
           <div class="leader-name">${leader.name}</div>
@@ -461,7 +606,7 @@
 
   /* ─── LOAD: LETTER ──────────────────────────────────────── */
   function loadLetter() {
-    fetch('data/letter.json')
+    fetch('data/letter.json?v=' + Date.now())
       .then(res => {
         if (!res.ok) throw new Error('Letter not found');
         return res.json();
@@ -502,7 +647,7 @@
 
   /* ─── LOAD: PHOTOS ──────────────────────────────────────── */
   function loadPhotos() {
-    fetch('data/photos.json')
+    fetch('data/photos.json?v=' + Date.now())
       .then(res => {
         if (!res.ok) throw new Error('Photos manifest not found');
         return res.json();
@@ -528,21 +673,61 @@
             item.className = 'gallery-item reveal-item';
             item.innerHTML = `
               <img src="${photo.src}" alt="${photo.caption || 'Photo memory'}" loading="lazy">
-              <div class="gallery-caption">
-                <div class="gallery-caption-text">${photo.caption || ''}</div>
-                ${photo.year ? `<div class="gallery-caption-year">${photo.year}</div>` : ''}
-              </div>
             `;
             grid.appendChild(item);
           });
+          
+          // Re-trigger scroll reveal for newly added DOM elements
+          if (typeof Animations !== 'undefined' && typeof Animations.initScrollReveal === 'function') {
+            Animations.initScrollReveal();
+          }
         }
       })
       .catch(err => {
-        console.log('Photos: No gallery loaded.', err.message);
+        console.log('Photos: No gallery loaded. Using local fallback.', err.message);
         const grid = document.getElementById('gallery-grid');
         const empty = document.getElementById('gallery-empty');
-        if (grid) grid.style.display = 'none';
-        if (empty) empty.style.display = 'block';
+        
+        const fallbackPhotos = [
+          { "src": "photos/akshu/1.jpg", "caption": "", "year": "" },
+          { "src": "photos/akshu/2.jpg", "caption": "", "year": "" },
+          { "src": "photos/akshu/3.jpg", "caption": "", "year": "" },
+          { "src": "photos/akshu/4.jpg", "caption": "", "year": "" },
+          { "src": "photos/akshu/5.jpg", "caption": "", "year": "" },
+          { "src": "photos/akshu/6.jpg", "caption": "", "year": "" },
+          { "src": "photos/akshu/7.jpg", "caption": "", "year": "" },
+          { "src": "photos/akshu/8.jpg", "caption": "", "year": "" },
+          { "src": "photos/akshu/9.jpeg", "caption": "", "year": "" },
+          { "src": "photos/akshu/10.jpeg", "caption": "", "year": "" },
+          { "src": "photos/akshu/11.jpeg", "caption": "", "year": "" },
+          { "src": "photos/akshu/12.jpeg", "caption": "", "year": "" },
+          { "src": "photos/akshu/13.jpeg", "caption": "", "year": "" },
+          { "src": "photos/akshu/14.jpeg", "caption": "", "year": "" },
+          { "src": "photos/akshu/15.jpeg", "caption": "", "year": "" },
+          { "src": "photos/akshu/16.jpeg", "caption": "", "year": "" },
+          { "src": "photos/akshu/17.jpeg", "caption": "", "year": "" },
+          { "src": "photos/akshu/18.jpeg", "caption": "", "year": "" }
+        ];
+
+        if (grid) {
+          grid.style.display = 'grid';
+          if (empty) empty.style.display = 'none';
+          grid.innerHTML = ''; // clear any sample templates
+
+          fallbackPhotos.forEach(photo => {
+            const item = document.createElement('div');
+            item.className = 'gallery-item reveal-item';
+            item.innerHTML = `
+              <img src="${photo.src}" alt="${photo.caption || 'Photo memory'}" loading="lazy">
+            `;
+            grid.appendChild(item);
+          });
+
+          // Re-trigger scroll reveal for fallback DOM elements
+          if (typeof Animations !== 'undefined' && typeof Animations.initScrollReveal === 'function') {
+            Animations.initScrollReveal();
+          }
+        }
       });
   }
 

@@ -697,66 +697,155 @@ body {
   gap: 3rem;
 }
 
-.moon-container {
-  display: flex;
-  justify-content: center;
-  padding: 2rem 0;
-}
-
-.moon-visual {
+.sky-interactive-card {
+  width: 100%;
+  max-width: 500px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem 2rem 2rem 2rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
-}
-
-.moon-glow {
-  position: absolute;
-  width: 250px;
-  height: 250px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 240, 232, 0.08) 0%, transparent 70%);
-  animation: moonGlow 4s ease-in-out infinite;
-}
-
-@keyframes moonGlow {
-  0%, 100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.15); opacity: 0.8; }
-}
-
-.moon-body {
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #e8e4d4, #d4cfc0, #c0baa8);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 40px rgba(245, 240, 232, 0.15), 0 0 80px rgba(245, 240, 232, 0.05);
 }
 
-.moon-shadow {
-  position: absolute;
-  top: 0;
-  right: -20%;
+.sky-time-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.sky-time-text {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--white);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.sky-status-text {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--gold-light);
+}
+
+.sky-arc-container {
+  width: 100%;
+  height: 160px;
+  position: relative;
+  margin-top: 1rem;
+}
+
+.sky-arc-svg {
   width: 100%;
   height: 100%;
+  overflow: visible;
+}
+
+.sky-celestial-body {
+  position: absolute;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: var(--bg-secondary);
-  transition: right 1.5s var(--ease-out-expo);
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
 }
 
-.moon-label {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  color: var(--white-soft);
-  font-style: italic;
+.sky-celestial-body.sun {
+  filter: drop-shadow(0 0 12px rgba(255, 235, 59, 0.8)) drop-shadow(0 0 25px rgba(255, 152, 0, 0.5));
 }
 
-.moon-illumination {
+.sky-celestial-body.moon {
+  filter: drop-shadow(0 0 10px rgba(245, 240, 232, 0.7)) drop-shadow(0 0 20px rgba(245, 240, 232, 0.3));
+}
+
+.sky-slider-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.slider-time-label {
   font-family: var(--font-body);
-  font-size: 0.8rem;
-  color: var(--white-dim);
-  letter-spacing: 0.1em;
+  font-size: 0.65rem;
+  color: var(--white-muted);
+  font-weight: 500;
+  min-width: 35px;
+}
+
+.slider-time-label:last-child {
+  text-align: right;
+}
+
+.sky-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.sky-slider:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Custom track and thumb styles */
+.sky-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--gold-light);
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 10px var(--gold-glow);
+  cursor: grab;
+  transition: transform 0.1s ease, background 0.3s ease;
+}
+
+.sky-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.2);
+  background: var(--gold);
+}
+
+.sky-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--gold-light);
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 10px var(--gold-glow);
+  cursor: grab;
+  transition: transform 0.1s ease, background 0.3s ease;
+}
+
+.sky-slider::-moz-range-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.2);
+  background: var(--gold);
 }
 
 .sky-details {
@@ -884,17 +973,34 @@ body {
   opacity: 1;
 }
 
-.leader-emoji {
-  font-size: 2rem;
+.leader-image-container {
   flex-shrink: 0;
-  width: 52px;
-  height: 52px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--glass-bg);
   border-radius: var(--radius-md);
   border: var(--glass-border);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.leader-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--transition-medium);
+}
+.leader-card:hover .leader-photo-img {
+  transform: scale(1.08);
+}
+
+.leader-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
 }
 
 .leader-info {
@@ -1772,63 +1878,66 @@ body {
    SECTION 12: PHOTO GALLERY
    ═══════════════════════════════════════════════════════════════ */
 .gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start; /* prevent stretching to keep aspect ratio of frames */
+  gap: 1rem 0.75rem; /* smaller gap for closer overlap */
+  padding: 3rem 0;
 }
 
 .gallery-item {
+  flex: 1 1 250px;
+  max-width: 280px;
+  min-width: 220px;
   position: relative;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  aspect-ratio: 4 / 3;
-  background: var(--glass-bg);
-  border: var(--glass-border);
-  transition: all var(--transition-medium);
+  background: linear-gradient(135deg, rgba(22, 21, 18, 0.95), rgba(15, 14, 12, 0.98));
+  border: 1px solid rgba(201, 168, 76, 0.18);
+  padding: 0.85rem; /* symmetric padding because captions are removed */
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: all 0.5s var(--ease-out-expo);
   cursor: pointer;
+  z-index: 1;
+  margin: -10px -12px; /* negative margins cause them to overlap */
 }
+
+/* Scattered rotations and translate offsets to create realistic overlaps */
+.gallery-item:nth-child(5n+1) {
+  transform: rotate(-3deg) translate(-6px, -10px);
+}
+.gallery-item:nth-child(5n+2) {
+  transform: rotate(2deg) translate(8px, 6px);
+}
+.gallery-item:nth-child(5n+3) {
+  transform: rotate(-1.5deg) translate(-4px, 12px);
+}
+.gallery-item:nth-child(5n+4) {
+  transform: rotate(3deg) translate(6px, -8px);
+}
+.gallery-item:nth-child(5n+5) {
+  transform: rotate(-2.5deg) translate(-10px, -4px);
+}
+
 .gallery-item:hover {
-  transform: scale(1.03);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  transform: scale(1.12) rotate(0deg) translate(0, -12px); /* larger lift and straighten */
+  z-index: 15; /* sits on top of all neighbors */
+  border-color: var(--gold);
+  box-shadow: 0 30px 60px rgba(201, 168, 76, 0.3), 0 0 20px rgba(201, 168, 76, 0.15);
 }
 
 .gallery-item img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.03);
   transition: transform var(--transition-slow);
 }
 .gallery-item:hover img {
-  transform: scale(1.08);
+  transform: scale(1.02);
 }
 
-.gallery-caption {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 1.5rem 1.25rem 1rem;
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-  transform: translateY(100%);
-  transition: transform var(--transition-medium);
-}
-.gallery-item:hover .gallery-caption {
-  transform: translateY(0);
-}
-
-.gallery-caption-text {
-  font-family: var(--font-elegant);
-  font-size: 0.9rem;
-  color: var(--white-soft);
-  font-style: italic;
-}
-.gallery-caption-year {
-  font-family: var(--font-body);
-  font-size: 0.65rem;
-  color: var(--white-dim);
-  margin-top: 0.25rem;
-  letter-spacing: 0.1em;
-}
 
 .gallery-empty {
   text-align: center;
@@ -2073,10 +2182,17 @@ body {
   }
 
   .gallery-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
   }
-  .gallery-caption {
-    transform: translateY(0);
+  .gallery-item {
+    margin: 0;
+    transform: none !important;
+  }
+  .gallery-item:hover {
+    transform: scale(1.05) !important;
   }
 
   .investment-cards {
@@ -2148,5 +2264,131 @@ body {
   background: var(--gold-glow);
   box-shadow: 0 0 15px var(--gold-glow);
   transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CELEBRATION SCREEN & CONFETTI
+   ═══════════════════════════════════════════════════════════════ */
+.celebration-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.birthday-reveal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 2;
+  padding: 2rem;
+  max-width: 700px;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 1.2s var(--ease-out-expo), transform 1.2s var(--ease-out-expo);
+  pointer-events: none;
+}
+.birthday-reveal-content.visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.reveal-birthday-text {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 7vw, 4.8rem);
+  font-weight: 700;
+  color: var(--gold-light);
+  line-height: 1.15;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 30px var(--gold-glow);
+  animation: textGlowPulse 4s ease-in-out infinite alternate;
+}
+
+.birthday-reveal-sub {
+  font-family: var(--font-elegant);
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  color: var(--white-muted);
+  font-weight: 300;
+  font-style: italic;
+  margin-bottom: 3.5rem;
+  max-width: 520px;
+  line-height: 1.6;
+}
+
+.enter-capsule-btn {
+  position: relative;
+  padding: 1.2rem 3rem;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--gold-dim);
+  border-radius: 100px;
+  color: var(--gold-light);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.6s var(--ease-out-expo);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.enter-capsule-btn:hover {
+  border-color: var(--gold);
+  color: var(--white);
+  background: var(--gold-glow-strong);
+  box-shadow: 0 0 30px var(--gold-glow-strong), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+.enter-capsule-btn:active {
+  transform: translateY(1px);
+}
+.enter-capsule-btn .btn-text {
+  position: relative;
+  z-index: 2;
+}
+.enter-capsule-btn .btn-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--gold-light) 0%, transparent 60%);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.5);
+  transition: all 0.6s var(--ease-out-expo);
+  z-index: 1;
+  pointer-events: none;
+}
+.enter-capsule-btn:hover .btn-glow {
+  opacity: 0.15;
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.countdown-content {
+  transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+}
+.countdown-content.fade-out {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+@keyframes textGlowPulse {
+  0% { filter: drop-shadow(0 0 2px rgba(201, 168, 76, 0.2)); }
+  100% { filter: drop-shadow(0 0 15px rgba(201, 168, 76, 0.6)); }
 }
 

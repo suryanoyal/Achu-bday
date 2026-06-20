@@ -1,11 +1,24 @@
 {
-  "title": "Our Memories Together",
+  "title": "You All These Years",
   "subtitle": "Every photo tells a story",
   "photos": [
-    {
-      "src": "photos/sample.jpg",
-      "caption": "Add your first photo here",
-      "year": "2024"
-    }
+    { "src": "photos/akshu/1.jpg", "caption": "", "year": "" },
+    { "src": "photos/akshu/2.jpg", "caption": "", "year": "" },
+    { "src": "photos/akshu/3.jpg", "caption": "", "year": "" },
+    { "src": "photos/akshu/4.jpg", "caption": "", "year": "" },
+    { "src": "photos/akshu/5.jpg", "caption": "", "year": "" },
+    { "src": "photos/akshu/6.jpg", "caption": "", "year": "" },
+    { "src": "photos/akshu/7.jpg", "caption": "", "year": "" },
+    { "src": "photos/akshu/8.jpg", "caption": "", "year": "" },
+    { "src": "photos/akshu/9.jpeg", "caption": "", "year": "" },
+    { "src": "photos/akshu/10.jpeg", "caption": "", "year": "" },
+    { "src": "photos/akshu/11.jpeg", "caption": "", "year": "" },
+    { "src": "photos/akshu/12.jpeg", "caption": "", "year": "" },
+    { "src": "photos/akshu/13.jpeg", "caption": "", "year": "" },
+    { "src": "photos/akshu/14.jpeg", "caption": "", "year": "" },
+    { "src": "photos/akshu/15.jpeg", "caption": "", "year": "" },
+    { "src": "photos/akshu/16.jpeg", "caption": "", "year": "" },
+    { "src": "photos/akshu/17.jpeg", "caption": "", "year": "" },
+    { "src": "photos/akshu/18.jpeg", "caption": "", "year": "" }
   ]
 }

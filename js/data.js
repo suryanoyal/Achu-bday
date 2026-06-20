@@ -49,13 +49,7 @@ const BIRTHDAY_DATA = {
     sunset: "6:38 PM IST",
     dayLength: "12 hours 40 minutes",
     goldenHour: "6:08 PM IST",
-    astronomyFacts: [
-      "Mars was at its closest approach to Earth in nearly 60,000 years — visible as a bright red dot",
-      "The Summer Triangle (Vega, Deneb, Altair) dominated the evening sky",
-      "Jupiter was visible in the pre-dawn sky in the constellation Cancer",
-      "The Perseid meteor shower was just days away from its peak",
-      "The Moon was a delicate waxing crescent, 18% illuminated"
-    ]
+    astronomyFacts: []
   },
 
   // ─── World Leaders ───────────────────────────────────────
@@ -65,6 +59,7 @@ const BIRTHDAY_DATA = {
       name: "Atal Bihari Vajpayee",
       period: "1998–2004",
       emoji: "🇮🇳",
+      image: "assets/images/leaders/vajpayee.jpg",
       note: "The poet-statesman who championed \"India Shining\""
     },
     {
@@ -72,6 +67,7 @@ const BIRTHDAY_DATA = {
       name: "Dr. A.P.J. Abdul Kalam",
       period: "2002–2007",
       emoji: "🇮🇳",
+      image: "assets/images/leaders/kalam.jpg",
       note: "The \"Missile Man\" and People's President — sworn in just a year before"
     },
     {
@@ -79,6 +75,7 @@ const BIRTHDAY_DATA = {
       name: "J. Jayalalithaa",
       period: "2001–2006",
       emoji: "🏛️",
+      image: "assets/images/leaders/jayalalithaa.jpg",
       note: "\"Amma\" — leading Tamil Nadu through a transformative era"
     },
     {
@@ -86,6 +83,7 @@ const BIRTHDAY_DATA = {
       name: "George W. Bush",
       period: "2001–2009",
       emoji: "🇺🇸",
+      image: "assets/images/leaders/bush.jpg",
       note: "43rd President, navigating a post-9/11 world"
     },
     {
@@ -93,6 +91,7 @@ const BIRTHDAY_DATA = {
       name: "Tony Blair",
       period: "1997–2007",
       emoji: "🇬🇧",
+      image: "assets/images/leaders/blair.jpg",
       note: "New Labour's transformative leader"
     },
     {
@@ -100,6 +99,7 @@ const BIRTHDAY_DATA = {
       name: "Kofi Annan",
       period: "1997–2006",
       emoji: "🌍",
+      image: "assets/images/leaders/annan.jpg",
       note: "Nobel Peace Prize laureate championing global cooperation"
     }
   ],

@@ -55,7 +55,9 @@
        ═══════════════════════════════════════════════════════ -->
   <div id="countdown-overlay" class="countdown-overlay">
     <div class="countdown-ambient"></div>
-    <div class="countdown-content">
+    <canvas id="celebration-canvas" class="celebration-canvas" aria-hidden="true"></canvas>
+
+    <div id="countdown-info" class="countdown-content">
       <div class="countdown-label">
         <span class="countdown-label-line">Something magical is</span>
         <span class="countdown-label-line countdown-label-highlight">almost here</span>
@@ -98,6 +100,16 @@
       </div>
       <button id="bypass-countdown" class="test-bypass-btn">Bypass Countdown (Test)</button>
     </div>
+
+    <!-- Celebration Screen (fades in after countdown ends) -->
+    <div id="birthday-reveal" class="birthday-reveal-content" style="display: none;">
+      <h1 class="reveal-birthday-text">Happy Birthday Akshaya</h1>
+      <p class="birthday-reveal-sub">The stars have aligned. Your digital time capsule is ready.</p>
+      <button id="enter-capsule-btn" class="enter-capsule-btn">
+        <span class="btn-text">Ennanae povomaaaa</span>
+        <span class="btn-glow"></span>
+      </button>
+    </div>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════
@@ -110,20 +122,16 @@
       <div class="landing-ambient"></div>
       <div class="container">
         <div class="landing-content">
-          <p class="landing-prelude reveal-item" data-delay="0">A Digital Time Capsule</p>
-          <h1 class="landing-headline reveal-item" data-delay="200">
+          <h1 class="landing-headline reveal-item" data-delay="0">
             <span class="headline-line">The World</span>
             <span class="headline-line headline-accent">The Day You Arrived</span>
           </h1>
-          <div class="landing-date reveal-item" data-delay="600">
+          <div class="landing-date reveal-item" data-delay="400">
             <div class="date-line"></div>
             <span class="date-text">August 2, 2003</span>
             <div class="date-line"></div>
           </div>
-          <p class="landing-subtitle reveal-item" data-delay="900">
-            Everything below is reconstructed from the day your story began.
-          </p>
-          <div class="landing-scroll-indicator reveal-item" data-delay="1200">
+          <div class="landing-scroll-indicator reveal-item" data-delay="700">
             <div class="scroll-arrow"></div>
           </div>
         </div>
@@ -157,14 +165,32 @@
           <p class="section-subtitle">What the heavens looked like the night you were born</p>
         </div>
         <div class="sky-content">
-          <div class="moon-container reveal-item">
-            <div class="moon-visual" id="moon-visual">
-              <div class="moon-glow"></div>
-              <div class="moon-body">
-                <div class="moon-shadow" id="moon-shadow"></div>
+          <div class="sky-interactive-card reveal-item">
+            <!-- Time Display -->
+            <div class="sky-time-display">
+              <span id="sky-current-time" class="sky-time-text">10:00 PM</span>
+              <span id="sky-time-status" class="sky-status-text">Late Night</span>
+            </div>
+
+            <!-- SVG Sky Arc -->
+            <div class="sky-arc-container">
+              <svg class="sky-arc-svg" viewBox="0 0 320 160">
+                <!-- Dashed arc for Sun/Moon path -->
+                <path id="sky-arc-path" d="M 20 140 A 140 100 0 0 1 300 140" fill="none" stroke="rgba(255, 245, 230, 0.2)" stroke-width="2" stroke-dasharray="4,4"/>
+                <!-- Horizon line -->
+                <line x1="10" y1="140" x2="310" y2="140" stroke="rgba(255, 245, 230, 0.15)" stroke-width="1"/>
+              </svg>
+              <!-- Sun / Moon Indicator -->
+              <div id="sky-celestial-body" class="sky-celestial-body moon">
+                <!-- Will be dynamically populated with Sun or Moon SVG -->
               </div>
-              <div class="moon-label" id="moon-label">Waxing Crescent</div>
-              <div class="moon-illumination" id="moon-illumination">18% illuminated</div>
+            </div>
+
+            <!-- Interactive Slider -->
+            <div class="sky-slider-wrapper">
+              <span class="slider-time-label">12 AM</span>
+              <input type="range" id="sky-time-slider" min="0" max="1439" value="1320" class="sky-slider" aria-label="Time of Day Slider">
+              <span class="slider-time-label">12 AM</span>
             </div>
           </div>
           <div class="sky-details">
@@ -187,10 +213,6 @@
               <span class="sky-card-icon">⏱️</span>
               <span class="sky-card-label">Day Length</span>
               <span class="sky-card-value" id="sky-day-length">12h 40m</span>
-            </div>
-          </div>
-          <div class="sky-facts reveal-item" id="sky-facts">
-            <!-- Rendered by JS -->
           </div>
         </div>
       </div>
@@ -287,9 +309,6 @@
     <section id="tamil-nadu" class="section section-tamilnadu">
       <div class="container">
         <div class="section-header reveal-item">
-          <img
-            src="file:///C:/Users/surya/.gemini/antigravity-ide/brain/1c106dad-8ce5-433c-9c84-67099ba88eaf/tamilnadu_collage_1781939685174.png"
-            alt="Tamil Nadu 2003 nostalgia collage" class="tamilnadu-collage" loading="lazy">
           <span class="section-number">06</span>
           <h2 class="section-title">Tamil Nadu in 2003</h2>
           <p class="section-subtitle">A nostalgic snapshot of life in your home state</p>
@@ -339,7 +358,7 @@
       <div class="container">
         <div class="section-header reveal-item">
           <span class="section-number">09</span>
-          <h2 class="section-title" id="gallery-title">Photo Memories</h2>
+          <h2 class="section-title" id="gallery-title">You All These Years</h2>
           <p class="section-subtitle" id="gallery-subtitle">Every photo tells a story</p>
         </div>
         <div class="gallery-grid" id="gallery-grid">
@@ -379,10 +398,10 @@
   <!-- ═══════════════════════════════════════════════════════
        SCRIPTS
        ═══════════════════════════════════════════════════════ -->
-  <script src="js/data.js"></script>
-  <script src="js/countdown.js"></script>
-  <script src="js/animations.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/data.js?v=1.2"></script>
+  <script src="js/countdown.js?v=1.2"></script>
+  <script src="js/animations.js?v=1.2"></script>
+  <script src="js/main.js?v=1.2"></script>
 
 </body>
 

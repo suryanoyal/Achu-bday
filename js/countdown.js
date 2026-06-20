@@ -13,6 +13,9 @@ const CountdownTimer = (() => {
   // DOM elements
   const elements = {
     overlay: null,
+    info: null,
+    reveal: null,
+    enterBtn: null,
     days: null,
     hours: null,
     minutes: null,
@@ -23,6 +26,9 @@ const CountdownTimer = (() => {
     onCompleteCallback = onComplete;
 
     elements.overlay = document.getElementById('countdown-overlay');
+    elements.info = document.getElementById('countdown-info');
+    elements.reveal = document.getElementById('birthday-reveal');
+    elements.enterBtn = document.getElementById('enter-capsule-btn');
     elements.days = document.getElementById('countdown-days');
     elements.hours = document.getElementById('countdown-hours');
     elements.minutes = document.getElementById('countdown-minutes');
@@ -30,19 +36,27 @@ const CountdownTimer = (() => {
 
     if (!elements.overlay) return;
 
+    // Stop click propagation on overlay to avoid triggering document click autoplay early (e.g. on bypass click)
+    elements.overlay.addEventListener('click', (e) => {
+      if (e.target.closest('#enter-capsule-btn')) {
+        return; // Allow the enter button click to bubble and trigger standard interaction
+      }
+      e.stopPropagation();
+    });
+
     // Hook up bypass button for test purposes
     const bypassBtn = document.getElementById('bypass-countdown');
     if (bypassBtn) {
       bypassBtn.addEventListener('click', () => {
-        clearInterval(timerInterval);
-        hideCountdown();
+        revealBirthdayCelebration();
       });
     }
-    // Developer shortcut: Ctrl+Shift+D to bypass countdown
+
+    // Developer shortcut: Ctrl+Shift+V to bypass countdown
     document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'v' || e.key === 'V')) {
         console.info('Developer shortcut triggered: bypass countdown');
-        hideCountdown();
+        revealBirthdayCelebration();
       }
     });
 
@@ -50,7 +64,7 @@ const CountdownTimer = (() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('devbypass')) {
       console.info('Developer bypass triggered');
-      hideCountdown();
+      revealBirthdayCelebration();
       return;
     }
 
@@ -83,8 +97,7 @@ const CountdownTimer = (() => {
     const diff = TARGET_DATE.getTime() - now.getTime();
 
     if (diff <= 0) {
-      clearInterval(timerInterval);
-      hideCountdown();
+      revealBirthdayCelebration();
       return;
     }
 
@@ -115,6 +128,60 @@ const CountdownTimer = (() => {
 
   function padNumber(num, length) {
     return String(num).padStart(length, '0');
+  }
+
+  function revealBirthdayCelebration() {
+    clearInterval(timerInterval);
+
+    // Fade out countdown content
+    if (elements.info) {
+      elements.info.classList.add('fade-out');
+      
+      // Wait for fade-out animation to complete (800ms)
+      setTimeout(() => {
+        elements.info.style.display = 'none';
+
+        // Start celebration confetti
+        if (typeof Animations !== 'undefined' && Animations.Celebration) {
+          Animations.Celebration.start();
+        }
+
+        // Fade in "Happy Birthday Akshaya" reveal content
+        if (elements.reveal) {
+          elements.reveal.style.display = 'flex';
+          // Trigger a reflow to start transition
+          elements.reveal.offsetHeight;
+          elements.reveal.classList.add('visible');
+        }
+      }, 800);
+    } else {
+      // Fallback
+      if (typeof Animations !== 'undefined' && Animations.Celebration) {
+        Animations.Celebration.start();
+      }
+      if (elements.reveal) {
+        elements.reveal.style.display = 'flex';
+        elements.reveal.classList.add('visible');
+      }
+    }
+
+    // Bind entering the capsule
+    if (elements.enterBtn) {
+      elements.enterBtn.addEventListener('click', () => {
+        // Stop celebration confetti rendering
+        if (typeof Animations !== 'undefined' && Animations.Celebration) {
+          Animations.Celebration.stop();
+        }
+        // Start background music
+        if (typeof window.playMusic === 'function') {
+          window.playMusic();
+        }
+        hideCountdown();
+      }, { once: true });
+    } else {
+      // Fallback if button is missing
+      setTimeout(hideCountdown, 4000);
+    }
   }
 
   function hideCountdown() {
