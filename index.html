@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Day You Arrived — Happy Birthday Akshayaaaa</title>
+  <meta name="description"
+    content="A premium digital time capsule reconstructing the world on August 2, 2003 — the day Akshayaaaa arrived.">
+  <meta property="og:title" content="The Day You Arrived — Happy Birthday Akshayaaaa">
+  <meta property="og:description" content="A cinematic birthday experience reconstructing the world on August 2, 2003.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0a0a0a">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Inter:wght@300;400;500;600&family=Dancing+Script:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap"
+    rel="stylesheet">
+
+  <!-- Stylesheet -->
+
+  <link rel="stylesheet" href="css/style.css?v=1.1">
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PARTICLE CANVAS (ambient background)
+       ═══════════════════════════════════════════════════════ -->
+  <canvas id="particle-canvas" aria-hidden="true"></canvas>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCROLL PROGRESS BAR
+       ═══════════════════════════════════════════════════════ -->
+  <div id="scroll-progress" class="scroll-progress" aria-hidden="true">
+    <div id="scroll-progress-bar" class="scroll-progress-bar"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       MUSIC CONTROL
+       ═══════════════════════════════════════════════════════ -->
+  <button id="music-toggle" class="music-toggle" aria-label="Toggle background music"
+    title="♪ Eppadi Vandhayo — Aromaley">
+    <span class="music-icon" id="music-icon">♪</span>
+    <span class="music-ring"></span>
+  </button>
+  <audio id="bg-music" loop preload="auto">
+    <source src="assets/music/eppadi-vandhayo.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- ═══════════════════════════════════════════════════════
+       COUNTDOWN OVERLAY (visible before Aug 2, 2026)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="countdown-overlay" class="countdown-overlay">
+    <div class="countdown-ambient"></div>
+    <div class="countdown-content">
+      <div class="countdown-label">
+        <span class="countdown-label-line">Something magical is</span>
+        <span class="countdown-label-line countdown-label-highlight">almost here</span>
+      </div>
+      <div class="countdown-timer" id="countdown-timer">
+        <div class="countdown-segment">
+          <div class="countdown-value-wrapper">
+            <span id="countdown-days" class="countdown-value">000</span>
+          </div>
+          <span class="countdown-unit">Days</span>
+        </div>
+        <div class="countdown-separator">:</div>
+        <div class="countdown-segment">
+          <div class="countdown-value-wrapper">
+            <span id="countdown-hours" class="countdown-value">00</span>
+          </div>
+          <span class="countdown-unit">Hours</span>
+        </div>
+        <div class="countdown-separator">:</div>
+        <div class="countdown-segment">
+          <div class="countdown-value-wrapper">
+            <span id="countdown-minutes" class="countdown-value">00</span>
+          </div>
+          <span class="countdown-unit">Minutes</span>
+        </div>
+        <div class="countdown-separator">:</div>
+        <div class="countdown-segment">
+          <div class="countdown-value-wrapper">
+            <span id="countdown-seconds" class="countdown-value">00</span>
+          </div>
+          <span class="countdown-unit">Seconds</span>
+        </div>
+      </div>
+      <div class="countdown-date">
+        <span>August 2, 2026</span>
+      </div>
+      <div class="countdown-footer">
+        <span class="countdown-footer-text">A birthday experience is being prepared for</span>
+        <span class="countdown-footer-name">Akshayaaaa</span>
+      </div>
+      <button id="bypass-countdown" class="test-bypass-btn">Bypass Countdown (Test)</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       MAIN CONTENT (revealed after countdown)
+       ═══════════════════════════════════════════════════════ -->
+  <main id="main-content" class="main-content" style="display: none;">
+
+    <!-- ─── LANDING SECTION ─────────────────────────────── -->
+    <section id="landing" class="section section-landing">
+      <div class="landing-ambient"></div>
+      <div class="container">
+        <div class="landing-content">
+          <p class="landing-prelude reveal-item" data-delay="0">A Digital Time Capsule</p>
+          <h1 class="landing-headline reveal-item" data-delay="200">
+            <span class="headline-line">The World</span>
+            <span class="headline-line headline-accent">The Day You Arrived</span>
+          </h1>
+          <div class="landing-date reveal-item" data-delay="600">
+            <div class="date-line"></div>
+            <span class="date-text">August 2, 2003</span>
+            <div class="date-line"></div>
+          </div>
+          <p class="landing-subtitle reveal-item" data-delay="900">
+            Everything below is reconstructed from the day your story began.
+          </p>
+          <div class="landing-scroll-indicator reveal-item" data-delay="1200">
+            <div class="scroll-arrow"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 1: BIRTHDAY SNAPSHOT ────────────────── -->
+    <section id="snapshot" class="section section-snapshot">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-number">01</span>
+          <h2 class="section-title">Your Birthday Snapshot</h2>
+          <p class="section-subtitle">The vital statistics of the day you arrived</p>
+        </div>
+        <div class="snapshot-grid" id="snapshot-grid">
+          <!-- Rendered by JS -->
+        </div>
+        <div class="snapshot-counters reveal-item" id="snapshot-counters" style="margin-top: 3.5rem;">
+          <!-- Rendered dynamically by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 2: THE SKY ABOVE ───────────────────── -->
+    <section id="sky" class="section section-sky">
+      <canvas id="star-canvas" class="star-canvas" aria-hidden="true"></canvas>
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-number">02</span>
+          <h2 class="section-title">The Sky Above You</h2>
+          <p class="section-subtitle">What the heavens looked like the night you were born</p>
+        </div>
+        <div class="sky-content">
+          <div class="moon-container reveal-item">
+            <div class="moon-visual" id="moon-visual">
+              <div class="moon-glow"></div>
+              <div class="moon-body">
+                <div class="moon-shadow" id="moon-shadow"></div>
+              </div>
+              <div class="moon-label" id="moon-label">Waxing Crescent</div>
+              <div class="moon-illumination" id="moon-illumination">18% illuminated</div>
+            </div>
+          </div>
+          <div class="sky-details">
+            <div class="sky-card reveal-item" data-delay="100">
+              <span class="sky-card-icon">🌅</span>
+              <span class="sky-card-label">Sunrise</span>
+              <span class="sky-card-value" id="sky-sunrise">5:58 AM IST</span>
+            </div>
+            <div class="sky-card reveal-item" data-delay="200">
+              <span class="sky-card-icon">🌇</span>
+              <span class="sky-card-label">Sunset</span>
+              <span class="sky-card-value" id="sky-sunset">6:38 PM IST</span>
+            </div>
+            <div class="sky-card reveal-item" data-delay="300">
+              <span class="sky-card-icon">🌙</span>
+              <span class="sky-card-label">Moon Phase</span>
+              <span class="sky-card-value" id="sky-moon-phase">Waxing Crescent</span>
+            </div>
+            <div class="sky-card reveal-item" data-delay="400">
+              <span class="sky-card-icon">⏱️</span>
+              <span class="sky-card-label">Day Length</span>
+              <span class="sky-card-value" id="sky-day-length">12h 40m</span>
+            </div>
+          </div>
+          <div class="sky-facts reveal-item" id="sky-facts">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 3: WORLD LEADERS ───────────────────── -->
+    <section id="world-leaders" class="section section-leaders">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-number">03</span>
+          <h2 class="section-title">The World That Day</h2>
+          <p class="section-subtitle">The leaders who shaped the world you were born into</p>
+        </div>
+        <div class="leaders-grid" id="leaders-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 4: SOUNDTRACK ──────────────────────── -->
+    <section id="soundtrack" class="section section-soundtrack">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-number">04</span>
+          <h2 class="section-title">The Soundtrack of Your Arrival</h2>
+          <p class="section-subtitle">The music that filled the air the week you were born</p>
+        </div>
+
+        <div class="music-category reveal-item">
+          <h3 class="music-category-title">
+            <span class="category-badge">Billboard #1</span>
+            The world was listening to
+          </h3>
+          <div class="music-featured" id="music-billboard">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <div class="music-category reveal-item">
+          <h3 class="music-category-title">
+            <span class="category-badge">Bollywood</span>
+            India was humming
+          </h3>
+          <div class="music-grid" id="music-indian">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <div class="music-category reveal-item">
+          <h3 class="music-category-title">
+            <span class="category-badge">Kollywood</span>
+            Tamil Nadu was grooving to
+          </h3>
+          <div class="music-grid" id="music-tamil">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 5: CINEMA ──────────────────────────── -->
+    <section id="cinema" class="section section-cinema">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-number">05</span>
+          <h2 class="section-title">Cinema of Your Era</h2>
+          <p class="section-subtitle">The films that defined the year you were born</p>
+        </div>
+
+        <div class="cinema-category reveal-item">
+          <h3 class="cinema-category-title">Tamil Cinema</h3>
+          <div class="cinema-grid" id="cinema-tamil">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <div class="cinema-category reveal-item">
+          <h3 class="cinema-category-title">Bollywood</h3>
+          <div class="cinema-grid" id="cinema-bollywood">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <div class="cinema-category reveal-item">
+          <h3 class="cinema-category-title">Hollywood</h3>
+          <div class="cinema-grid" id="cinema-hollywood">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 6: TAMIL NADU IN 2003 ─────────────── -->
+    <section id="tamil-nadu" class="section section-tamilnadu">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <img
+            src="file:///C:/Users/surya/.gemini/antigravity-ide/brain/1c106dad-8ce5-433c-9c84-67099ba88eaf/tamilnadu_collage_1781939685174.png"
+            alt="Tamil Nadu 2003 nostalgia collage" class="tamilnadu-collage" loading="lazy">
+          <span class="section-number">06</span>
+          <h2 class="section-title">Tamil Nadu in 2003</h2>
+          <p class="section-subtitle">A nostalgic snapshot of life in your home state</p>
+        </div>
+        <div class="nostalgia-grid" id="nostalgia-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 7: WHAT WAS HAPPENING IN INDIA ─────── -->
+    <section id="india-events" class="section section-events">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-number">07</span>
+          <h2 class="section-title">What Was Happening in India</h2>
+          <p class="section-subtitle">The stories that shaped the nation around the time you arrived</p>
+        </div>
+        <div class="events-timeline" id="events-timeline">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 8: LETTER ─────────────────────────── -->
+    <section id="letter" class="section section-letter">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-number">08</span>
+          <h2 class="section-title">A Letter to You</h2>
+        </div>
+        <div class="letter-container reveal-item">
+          <div class="letter-paper" id="letter-paper">
+            <div class="letter-greeting" id="letter-greeting">Dear Akshayaaaa,</div>
+            <div class="letter-body" id="letter-body">
+              <!-- Loaded from letter.json -->
+            </div>
+            <div class="letter-closing" id="letter-closing">With all my love,</div>
+            <div class="letter-sender" id="letter-sender">Your Best Friend</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 9: PHOTO MEMORIES ─────────────────── -->
+    <section id="gallery" class="section section-gallery">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-number">09</span>
+          <h2 class="section-title" id="gallery-title">Photo Memories</h2>
+          <p class="section-subtitle" id="gallery-subtitle">Every photo tells a story</p>
+        </div>
+        <div class="gallery-grid" id="gallery-grid">
+          <!-- Rendered from photos.json -->
+        </div>
+        <div class="gallery-empty" id="gallery-empty" style="display: none;">
+          <p class="gallery-empty-text">Photos will appear here soon ✨</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SECTION 10: FINAL REVEAL ───────────────────── -->
+    <section id="final-reveal" class="section section-final">
+      <canvas id="finale-canvas" class="finale-canvas" aria-hidden="true"></canvas>
+      <div class="final-content">
+        <div class="final-line final-line-1 reveal-item" data-delay="0">
+          <span>Out of billions of people...</span>
+        </div>
+        <div class="final-line final-line-2 reveal-item" data-delay="800">
+          <span>...there is only one you.</span>
+        </div>
+        <div class="final-divider reveal-item" data-delay="1600"></div>
+        <div class="final-birthday reveal-item" data-delay="2200">
+          <span>Happy Birthday</span>
+        </div>
+        <div class="final-name reveal-item" data-delay="3000">
+          <span>Akshayaaaa</span>
+        </div>
+        <div class="final-hearts reveal-item" data-delay="3800">
+          <span>✦ ✦ ✦</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCRIPTS
+       ═══════════════════════════════════════════════════════ -->
+  <script src="js/data.js"></script>
+  <script src="js/countdown.js"></script>
+  <script src="js/animations.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+
+</html>

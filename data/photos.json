@@ -1,0 +1,11 @@
+{
+  "title": "Our Memories Together",
+  "subtitle": "Every photo tells a story",
+  "photos": [
+    {
+      "src": "photos/sample.jpg",
+      "caption": "Add your first photo here",
+      "year": "2024"
+    }
+  ]
+}
