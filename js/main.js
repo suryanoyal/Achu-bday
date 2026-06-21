@@ -173,12 +173,24 @@
       { id: 'counter-heartbeats', label: 'Heartbeats Lived (est.)' }
     ];
 
-    container.innerHTML = counters.map(c => `
-      <div class="counter-card" id="${c.id}-card">
-        <span class="counter-value" id="${c.id}">0</span>
-        <span class="counter-label">${c.label}</span>
-      </div>
-    `).join('');
+    container.innerHTML = counters.map(c => {
+      if (c.id === 'counter-heartbeats') {
+        return `
+          <div class="counter-card heartbeat-interactive-card" id="${c.id}-card">
+            <span class="heart-pulse-icon">❤️</span>
+            <span class="counter-value" id="${c.id}">0</span>
+            <span class="counter-label">${c.label}</span>
+            <span class="hover-hint-text">Hover to feel the rhythm 🎧</span>
+          </div>
+        `;
+      }
+      return `
+        <div class="counter-card" id="${c.id}-card">
+          <span class="counter-value" id="${c.id}">0</span>
+          <span class="counter-label">${c.label}</span>
+        </div>
+      `;
+    }).join('');
 
     const birthDate = BIRTHDAY_DATA.birthDateISO || new Date("2003-08-02T00:00:00+05:30");
     
@@ -252,6 +264,112 @@
     }
     
     requestAnimationFrame(animate);
+
+    // Play heartbeat sound on hover
+    const heartCard = document.getElementById('counter-heartbeats-card');
+    if (heartCard) {
+      let audioCtx = null;
+      let heartbeatInterval = null;
+
+      const playHeartbeatSound = () => {
+        try {
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          
+          const now = audioCtx.currentTime;
+          
+          // Use a lowpass filter to make it sound muffled/warm
+          const filter = audioCtx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(100, now);
+          filter.connect(audioCtx.destination);
+          
+          // First beat (lub)
+          const osc1 = audioCtx.createOscillator();
+          const gain1 = audioCtx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(55, now);
+          osc1.frequency.linearRampToValueAtTime(25, now + 0.12);
+          
+          gain1.gain.setValueAtTime(0, now);
+          gain1.gain.linearRampToValueAtTime(0.8, now + 0.02);
+          gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+          
+          osc1.connect(gain1);
+          gain1.connect(filter);
+          
+          osc1.start(now);
+          osc1.stop(now + 0.13);
+          
+          // Second beat (dub)
+          const osc2 = audioCtx.createOscillator();
+          const gain2 = audioCtx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(50, now + 0.15);
+          osc2.frequency.linearRampToValueAtTime(20, now + 0.15 + 0.12);
+          
+          gain2.gain.setValueAtTime(0, now + 0.15);
+          gain2.gain.linearRampToValueAtTime(0.6, now + 0.15 + 0.02);
+          gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.15 + 0.12);
+          
+          osc2.connect(gain2);
+          gain2.connect(filter);
+          
+          osc2.start(now + 0.15);
+          osc2.stop(now + 0.15 + 0.13);
+        } catch (e) {
+          console.error("Failed to play synthesized heartbeat:", e);
+        }
+      };
+
+      const fadeMusicVolume = (targetVolume, duration = 300) => {
+        const bgMusic = document.getElementById('bg-music');
+        if (!bgMusic) return;
+
+        // Cancel any ongoing fade
+        if (bgMusic.dataset.fadeTimer) {
+          cancelAnimationFrame(parseInt(bgMusic.dataset.fadeTimer));
+        }
+
+        const startVolume = bgMusic.volume;
+        const volumeDiff = targetVolume - startVolume;
+        const startTime = performance.now();
+
+        const step = (time) => {
+          const elapsed = time - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const ease = progress * (2 - progress); // easeOutQuad
+          bgMusic.volume = startVolume + volumeDiff * ease;
+
+          if (progress < 1) {
+            bgMusic.dataset.fadeTimer = requestAnimationFrame(step);
+          } else {
+            bgMusic.volume = targetVolume;
+            delete bgMusic.dataset.fadeTimer;
+          }
+        };
+
+        bgMusic.dataset.fadeTimer = requestAnimationFrame(step);
+      };
+
+      heartCard.addEventListener('mouseenter', () => {
+        fadeMusicVolume(0.05, 300);
+        playHeartbeatSound();
+        heartbeatInterval = setInterval(playHeartbeatSound, 800);
+      });
+
+      heartCard.addEventListener('mouseleave', () => {
+        fadeMusicVolume(0.3, 400);
+        if (heartbeatInterval) {
+          clearInterval(heartbeatInterval);
+          heartbeatInterval = null;
+        }
+      });
+    }
   }
 
   /* ─── RENDER: SKY FACTS ─────────────────────────────────── */
