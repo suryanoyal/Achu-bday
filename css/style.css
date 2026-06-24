@@ -767,20 +767,19 @@ body {
   gap: 3rem;
 }
 
-.sky-interactive-card {
+.sky-arc-widget {
   width: 100%;
-  max-width: 500px;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: var(--glass-border);
   border-radius: var(--radius-xl);
-  padding: 2.5rem 2rem 2rem 2rem;
+  padding: 2rem 2rem 1.5rem 2rem;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
   position: relative;
   overflow: hidden;
 }
@@ -812,15 +811,15 @@ body {
 
 .sky-arc-container {
   width: 100%;
-  height: 160px;
+  height: 200px;
   position: relative;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
-.sky-arc-svg {
+.sky-arc-canvas {
   width: 100%;
   height: 100%;
-  overflow: visible;
+  display: block;
 }
 
 .sky-celestial-body {
@@ -832,7 +831,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: box-shadow 0.3s ease;
+  transition: left 0.15s ease, top 0.15s ease, box-shadow 0.3s ease;
   pointer-events: none;
   z-index: 10;
 }
@@ -843,6 +842,29 @@ body {
 
 .sky-celestial-body.moon {
   filter: drop-shadow(0 0 10px rgba(245, 240, 232, 0.7)) drop-shadow(0 0 20px rgba(245, 240, 232, 0.3));
+}
+
+.sky-hour-labels {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2%;
+  margin-top: -0.25rem;
+}
+
+.sky-hour-label {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  color: var(--white-muted);
+  font-weight: 500;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.sky-hour-label.highlight {
+  color: var(--gold-light);
+  opacity: 1;
+  font-weight: 600;
 }
 
 .sky-slider-wrapper {

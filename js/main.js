@@ -388,7 +388,7 @@
     });
   }
 
-  /* ─── INTERACTIVE SKY TIMELINE (iPhone Weather Style) ────── */
+  /* ─── INTERACTIVE SKY TIMELINE (iPhone Weather Style – 24hr) ── */
   function initInteractiveSky() {
     const slider = document.getElementById('sky-time-slider');
     const timeText = document.getElementById('sky-current-time');
@@ -396,8 +396,17 @@
     const celestialBody = document.getElementById('sky-celestial-body');
     const sectionSky = document.getElementById('sky');
     const starCanvas = document.getElementById('star-canvas');
+    const arcCanvas = document.getElementById('sky-arc-canvas');
+    const arcContainer = document.getElementById('sky-arc-container');
+    const hourLabelsContainer = document.getElementById('sky-hour-labels');
 
-    if (!slider || !timeText || !statusText || !celestialBody || !sectionSky) return;
+    if (!slider || !timeText || !statusText || !celestialBody || !sectionSky || !arcCanvas || !arcContainer) return;
+
+    const ctx = arcCanvas.getContext('2d');
+
+    // Sunrise / Sunset in minutes
+    const SUNRISE = 358;  // 5:58 AM
+    const SUNSET = 1118;  // 6:38 PM
 
     const sunSvg = `
       <svg viewBox="0 0 24 24" width="100%" height="100%">
@@ -421,10 +430,18 @@
       </svg>
     `;
 
-    const centerX = 160;
-    const centerY = 140;
-    const radiusX = 140;
-    const radiusY = 100;
+    // Generate hour labels
+    if (hourLabelsContainer) {
+      const labelHours = [0, 3, 6, 9, 12, 15, 18, 21];
+      labelHours.forEach(h => {
+        const span = document.createElement('span');
+        span.className = 'sky-hour-label';
+        const displayH = h === 0 ? '12AM' : h < 12 ? `${h}AM` : h === 12 ? '12PM' : `${h - 12}PM`;
+        span.textContent = displayH;
+        if (h === 6 || h === 18) span.classList.add('highlight');
+        hourLabelsContainer.appendChild(span);
+      });
+    }
 
     const skyKeyframes = [
       { time: 0,    c1: [2, 1, 17],     c2: [9, 7, 40] },
@@ -439,6 +456,159 @@
       { time: 1440, c1: [2, 1, 17],     c2: [9, 7, 40] }
     ];
 
+    /** Convert time (minutes) to x position across the full width */
+    function timeToX(minutes, w, pad) {
+      return pad + (minutes / 1440) * (w - 2 * pad);
+    }
+
+    /** Get the Y position on the arc for a given time.
+     *  Sun is above horizon between sunrise and sunset (arc peaks at midday).
+     *  Below horizon otherwise (inverted arc). */
+    function timeToY(minutes, w, h, pad) {
+      const horizonY = h * 0.65;
+      const arcHeight = h * 0.55;
+      const belowDepth = h * 0.22;
+
+      if (minutes >= SUNRISE && minutes <= SUNSET) {
+        // Daytime: sinusoidal arc above horizon
+        const dayProgress = (minutes - SUNRISE) / (SUNSET - SUNRISE);
+        const sinVal = Math.sin(dayProgress * Math.PI);
+        return horizonY - sinVal * arcHeight;
+      } else {
+        // Nighttime: gentle inverted arc below horizon
+        let nightProgress;
+        const nightLen = (1440 - SUNSET) + SUNRISE;
+        if (minutes > SUNSET) {
+          nightProgress = (minutes - SUNSET) / nightLen;
+        } else {
+          nightProgress = ((1440 - SUNSET) + minutes) / nightLen;
+        }
+        const sinVal = Math.sin(nightProgress * Math.PI);
+        return horizonY + sinVal * belowDepth;
+      }
+    }
+
+    function resizeCanvas() {
+      const rect = arcContainer.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      arcCanvas.width = rect.width * dpr;
+      arcCanvas.height = rect.height * dpr;
+      arcCanvas.style.width = rect.width + 'px';
+      arcCanvas.style.height = rect.height + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function drawArc(currentMinutes) {
+      const w = arcCanvas.width / (window.devicePixelRatio || 1);
+      const h = arcCanvas.height / (window.devicePixelRatio || 1);
+      const pad = w * 0.02;
+      const horizonY = h * 0.65;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // ── Draw the dashed path (full 24hr) ──
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = 'rgba(255, 245, 230, 0.12)';
+      ctx.lineWidth = 1.5;
+      for (let m = 0; m <= 1440; m += 2) {
+        const x = timeToX(m, w, pad);
+        const y = timeToY(m, w, h, pad);
+        if (m === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // ── Draw the sunlit arc segment (golden, sunrise to sunset) ──
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255, 200, 50, 0.7)';
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = 'rgba(255, 200, 50, 0.3)';
+      ctx.shadowBlur = 8;
+      for (let m = SUNRISE; m <= SUNSET; m += 2) {
+        const x = timeToX(m, w, pad);
+        const y = timeToY(m, w, h, pad);
+        if (m === SUNRISE) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // ── Fill the area under the sunlit arc with a golden glow ──
+      ctx.beginPath();
+      for (let m = SUNRISE; m <= SUNSET; m += 2) {
+        const x = timeToX(m, w, pad);
+        const y = timeToY(m, w, h, pad);
+        if (m === SUNRISE) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.lineTo(timeToX(SUNSET, w, pad), horizonY);
+      ctx.lineTo(timeToX(SUNRISE, w, pad), horizonY);
+      ctx.closePath();
+
+      const grad = ctx.createLinearGradient(0, h * 0.1, 0, horizonY);
+      grad.addColorStop(0, 'rgba(255, 200, 50, 0.15)');
+      grad.addColorStop(1, 'rgba(255, 200, 50, 0.02)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // ── Horizon line ──
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255, 245, 230, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.moveTo(pad, horizonY);
+      ctx.lineTo(w - pad, horizonY);
+      ctx.stroke();
+
+      // ── Hour tick marks ──
+      for (let hr = 0; hr <= 24; hr += 3) {
+        const m = hr === 24 ? 1440 : hr * 60;
+        const x = timeToX(m, w, pad);
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 245, 230, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.moveTo(x, horizonY - 4);
+        ctx.lineTo(x, horizonY + 4);
+        ctx.stroke();
+      }
+
+      // ── Sunrise & Sunset markers ──
+      const srX = timeToX(SUNRISE, w, pad);
+      const ssX = timeToX(SUNSET, w, pad);
+
+      // Sunrise dot
+      ctx.beginPath();
+      ctx.arc(srX, horizonY, 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 160, 60, 0.9)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 200, 100, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Sunset dot
+      ctx.beginPath();
+      ctx.arc(ssX, horizonY, 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 100, 50, 0.9)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 150, 80, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // ── Current time indicator line ──
+      const curX = timeToX(currentMinutes, w, pad);
+      ctx.beginPath();
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.moveTo(curX, 0);
+      ctx.lineTo(curX, h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      return { w, h, pad };
+    }
+
     function updateSky(minutes) {
       const hrs = Math.floor(minutes / 60);
       const mins = Math.floor(minutes % 60);
@@ -447,37 +617,33 @@
       const displayMins = String(mins).padStart(2, '0');
       timeText.textContent = `${displayHrs}:${displayMins} ${ampm}`;
 
-      const isDay = minutes >= 358 && minutes < 1118;
-      
-      let progress, angle;
+      const isDay = minutes >= SUNRISE && minutes < SUNSET;
+
       if (isDay) {
-        progress = (minutes - 358) / (1118 - 358);
-        angle = Math.PI - (progress * Math.PI);
         celestialBody.innerHTML = sunSvg;
         celestialBody.className = "sky-celestial-body sun";
-        statusText.textContent = minutes === 720 ? "Midday" : (minutes < 720 ? "Morning" : "Afternoon");
+        statusText.textContent = minutes < 720 ? "Morning" : (minutes === 720 ? "Midday" : "Afternoon");
       } else {
-        let nightProgress;
-        const nightLength = (1440 - 1118) + 358;
-        if (minutes >= 1118) {
-          nightProgress = (minutes - 1118) / nightLength;
-        } else {
-          nightProgress = ((1440 - 1118) + minutes) / nightLength;
-        }
-        angle = Math.PI - (nightProgress * Math.PI);
         celestialBody.innerHTML = moonSvg;
         celestialBody.className = "sky-celestial-body moon";
-        statusText.textContent = minutes >= 1118 || minutes < 60 ? "Evening / Dusk" : "Late Night";
+        if (minutes >= SUNSET && minutes < 1200) statusText.textContent = "Evening / Dusk";
+        else if (minutes >= 1200 || minutes < 180) statusText.textContent = "Late Night";
+        else statusText.textContent = "Pre-Dawn";
       }
 
-      const x = centerX + radiusX * Math.cos(angle);
-      const y = centerY - radiusY * Math.sin(angle);
-      
-      const leftPct = (x / 320) * 100;
-      const topPct = (y / 160) * 100;
+      // Resize and draw arc
+      resizeCanvas();
+      const { w, h, pad } = drawArc(minutes);
+
+      // Position celestial body on the arc
+      const posX = timeToX(minutes, w, pad);
+      const posY = timeToY(minutes, w, h, pad);
+      const leftPct = (posX / w) * 100;
+      const topPct = (posY / h) * 100;
       celestialBody.style.left = `${leftPct}%`;
       celestialBody.style.top = `${topPct}%`;
 
+      // Sky background colors
       let k1, k2;
       for (let i = 0; i < skyKeyframes.length - 1; i++) {
         if (minutes >= skyKeyframes[i].time && minutes <= skyKeyframes[i+1].time) {
@@ -518,6 +684,15 @@
 
     slider.addEventListener('input', (e) => {
       updateSky(parseInt(e.target.value));
+    });
+
+    // Redraw on resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        updateSky(parseInt(slider.value));
+      }, 100);
     });
 
     // Start initial state at 10:00 PM (1320 minutes)
