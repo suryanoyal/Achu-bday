@@ -18,6 +18,23 @@
     if (CountdownTimer.isBirthdayTime()) {
       onBirthdayReached();
     }
+
+    // SFX toggle button
+    const sfxToggle = document.getElementById('sfx-toggle');
+    const sfxIcon = document.getElementById('sfx-icon');
+    if (sfxToggle) {
+      let sfxMuted = false;
+      sfxToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sfxMuted = !sfxMuted;
+        if (typeof SFX !== 'undefined') {
+          SFX.setVolume(sfxMuted ? 0 : 0.5);
+          SFX.setTickEnabled(!sfxMuted);
+        }
+        sfxToggle.classList.toggle('muted', sfxMuted);
+        if (sfxIcon) sfxIcon.textContent = sfxMuted ? '🔇' : '🔊';
+      });
+    }
   });
 
   function onBirthdayReached() {

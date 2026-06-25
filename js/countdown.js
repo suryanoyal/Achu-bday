@@ -1,6 +1,7 @@
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  COUNTDOWN TIMER — IST Timezone                            ║
+   ║  COUNTDOWN TIMER v2.0 — IST Timezone                      ║
    ║  Target: August 2, 2026, 12:00:00 AM IST                  ║
+   ║  With SFX · 3D Flip · Particle Bursts                     ║
    ╚══════════════════════════════════════════════════════════════╝ */
 
 const CountdownTimer = (() => {
@@ -9,6 +10,8 @@ const CountdownTimer = (() => {
 
   let timerInterval = null;
   let onCompleteCallback = null;
+  let sfxUnlocked = false;
+  let previousValues = { days: '', hours: '', minutes: '', seconds: '' };
 
   // DOM elements
   const elements = {
@@ -36,10 +39,54 @@ const CountdownTimer = (() => {
 
     if (!elements.overlay) return;
 
-    // Stop click propagation on overlay to avoid triggering document click autoplay early (e.g. on bypass click)
+    // Initialize 3D background
+    if (typeof Abstract3D !== 'undefined') {
+      Abstract3D.init();
+    }
+
+    // Initialize custom cursor
+    if (typeof GoldCursor !== 'undefined') {
+      GoldCursor.init();
+    }
+
+    // Unlock SFX (either on page load or on user interaction)
+    const tryUnlockSFX = () => {
+      if (sfxUnlocked || typeof SFX === 'undefined') return;
+
+      SFX.unlock();
+      if (SFX.isReady()) {
+        sfxUnlocked = true;
+        // Start ambient drone after a brief delay
+        setTimeout(() => {
+          SFX.ambientDrone();
+        }, 500);
+        
+        // Successfully unlocked, so remove fallback gesture listeners
+        removeInteractionListeners();
+      }
+    };
+
+    const removeInteractionListeners = () => {
+      document.removeEventListener('click', tryUnlockSFX, true);
+      document.removeEventListener('touchstart', tryUnlockSFX, { capture: true });
+      document.removeEventListener('keydown', tryUnlockSFX, true);
+    };
+
+    // 1. Try to unlock immediately on load (succeeds if browser allows autoplay)
+    tryUnlockSFX();
+
+    // 2. Set up fallback interaction listeners in case browser blocks autoplay
+    if (!sfxUnlocked) {
+      document.addEventListener('click', tryUnlockSFX, true);
+      document.addEventListener('touchstart', tryUnlockSFX, { capture: true, passive: true });
+      document.addEventListener('keydown', tryUnlockSFX, true);
+    }
+
+    // Stop click propagation on overlay (preserve existing behavior)
     elements.overlay.addEventListener('click', (e) => {
+      tryUnlockSFX(); // Ensure audio context unlocks on click anywhere on overlay
       if (e.target.closest('#enter-capsule-btn')) {
-        return; // Allow the enter button click to bubble and trigger standard interaction
+        return;
       }
       e.stopPropagation();
     });
@@ -77,14 +124,9 @@ const CountdownTimer = (() => {
     // Start the countdown
     update();
     timerInterval = setInterval(update, 1000);
-  }
 
-  function getISTNow() {
-    // Get current time in IST
-    const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
-    return new Date(utc + istOffset);
+    // Add hover SFX to timer segments
+    initTimerCardSFX();
   }
 
   function isBirthdayTime() {
@@ -106,23 +148,53 @@ const CountdownTimer = (() => {
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-    // Update with animated transitions
-    updateValue(elements.days, padNumber(days, 2));
-    updateValue(elements.hours, padNumber(hours, 2));
-    updateValue(elements.minutes, padNumber(minutes, 2));
-    updateValue(elements.seconds, padNumber(seconds, 2));
+    const newDays = padNumber(days, 2);
+    const newHours = padNumber(hours, 2);
+    const newMinutes = padNumber(minutes, 2);
+    const newSeconds = padNumber(seconds, 2);
+
+    // Animate changed values with flip effect + SFX
+    updateValue(elements.days, newDays, 'days');
+    updateValue(elements.hours, newHours, 'hours');
+    updateValue(elements.minutes, newMinutes, 'minutes');
+    updateValue(elements.seconds, newSeconds, 'seconds');
+
+    // Play tick SFX on every second
+    if (sfxUnlocked && typeof SFX !== 'undefined') {
+      SFX.tick();
+    }
   }
 
-  function updateValue(element, newValue) {
+  function updateValue(element, newValue, key) {
     if (!element) return;
-    if (element.textContent !== newValue) {
-      element.style.transform = 'translateY(-4px)';
-      element.style.opacity = '0.6';
+
+    if (previousValues[key] !== newValue) {
+      const wrapper = element.closest('.countdown-value-wrapper');
+
+      // Add flip animation class
+      if (wrapper) {
+        wrapper.classList.add('flip-animate');
+        setTimeout(() => wrapper.classList.remove('flip-animate'), 500);
+      }
+
+      // Digit change micro-animation
+      element.style.transform = 'translateY(-6px) scale(1.05)';
+      element.style.opacity = '0.5';
+      element.style.filter = 'blur(2px)';
+
       setTimeout(() => {
         element.textContent = newValue;
-        element.style.transform = 'translateY(0)';
+        element.style.transform = 'translateY(0) scale(1)';
         element.style.opacity = '1';
-      }, 100);
+        element.style.filter = 'blur(0)';
+      }, 120);
+
+      // Play digit blip SFX for major changes (not seconds)
+      if (key !== 'seconds' && sfxUnlocked && typeof SFX !== 'undefined') {
+        SFX.digitBlip();
+      }
+
+      previousValues[key] = newValue;
     }
   }
 
@@ -130,14 +202,44 @@ const CountdownTimer = (() => {
     return String(num).padStart(length, '0');
   }
 
+  /** Add hover chime SFX to each timer card */
+  function initTimerCardSFX() {
+    const segments = document.querySelectorAll('.countdown-segment');
+    segments.forEach((seg, index) => {
+      const wrapper = seg.querySelector('.countdown-value-wrapper');
+      if (wrapper) {
+        wrapper.addEventListener('mouseenter', () => {
+          if (sfxUnlocked && typeof SFX !== 'undefined') {
+            SFX.chime(index);
+          }
+        });
+      }
+    });
+  }
+
   function revealBirthdayCelebration() {
     clearInterval(timerInterval);
+
+    // Stop ambient drone
+    if (typeof SFX !== 'undefined') {
+      SFX.stopAmbient();
+      SFX.setTickEnabled(false);
+      // Play whoosh transition
+      setTimeout(() => {
+        if (SFX.isReady()) SFX.whoosh();
+      }, 300);
+    }
+
+    // Destroy custom cursor
+    if (typeof GoldCursor !== 'undefined') {
+      GoldCursor.destroy();
+    }
 
     // Fade out countdown content
     if (elements.info) {
       elements.info.classList.add('fade-out');
       
-      // Wait for fade-out animation to complete (800ms)
+      // Wait for fade-out animation
       setTimeout(() => {
         elements.info.style.display = 'none';
 
@@ -146,16 +248,14 @@ const CountdownTimer = (() => {
           Animations.Celebration.start();
         }
 
-        // Fade in "Happy Birthday Akshaya" reveal content
+        // Fade in birthday reveal content
         if (elements.reveal) {
           elements.reveal.style.display = 'flex';
-          // Trigger a reflow to start transition
           elements.reveal.offsetHeight;
           elements.reveal.classList.add('visible');
         }
       }, 800);
     } else {
-      // Fallback
       if (typeof Animations !== 'undefined' && Animations.Celebration) {
         Animations.Celebration.start();
       }
@@ -168,9 +268,13 @@ const CountdownTimer = (() => {
     // Bind entering the capsule
     if (elements.enterBtn) {
       elements.enterBtn.addEventListener('click', () => {
-        // Stop celebration confetti rendering
+        // Stop celebration confetti
         if (typeof Animations !== 'undefined' && Animations.Celebration) {
           Animations.Celebration.stop();
+        }
+        // Destroy 3D engine
+        if (typeof Abstract3D !== 'undefined') {
+          Abstract3D.destroy();
         }
         // Start background music
         if (typeof window.playMusic === 'function') {
@@ -179,7 +283,6 @@ const CountdownTimer = (() => {
         hideCountdown();
       }, { once: true });
     } else {
-      // Fallback if button is missing
       setTimeout(hideCountdown, 4000);
     }
   }
@@ -187,7 +290,6 @@ const CountdownTimer = (() => {
   function hideCountdown() {
     if (elements.overlay) {
       elements.overlay.classList.add('hidden');
-      // Remove from DOM after transition
       setTimeout(() => {
         elements.overlay.style.display = 'none';
         if (onCompleteCallback) {
