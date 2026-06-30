@@ -1085,6 +1085,8 @@
     const yesBtn = modal.querySelector('#happy-yes-btn');
     
     let isMoving = false;
+    let originalLeft = null;
+    let originalTop = null;
     
     // Mouse movement repel logic allowing button to escape cursor push smoothly
     const handleNoButtonRepel = (e) => {
@@ -1096,17 +1098,32 @@
       
       const distanceToCursor = Math.sqrt(Math.pow(e.clientX - buttonCenterX, 2) + Math.pow(e.clientY - buttonCenterY, 2));
       
-      // Repel if the cursor gets within 90px of the button center
-      if (distanceToCursor < 90) {
+      // Repel if the cursor gets within 105px of the button center
+      if (distanceToCursor < 105) {
         isMoving = true;
         
-        // Convert to fixed coordinate mapping so it can slide anywhere on screen
-        if (noBtn.style.position !== 'fixed') {
+        // Convert to fixed coordinate mapping once to establish layout anchor
+        if (originalLeft === null) {
+          // Temporarily disable transitions to prevent transition anomalies from auto layout styles
+          noBtn.style.transition = 'none';
+          
+          originalLeft = rect.left;
+          originalTop = rect.top;
+          
+          // Reparent to document.body to bypass parent modal transforms
+          document.body.appendChild(noBtn);
+          
           noBtn.style.position = 'fixed';
-          noBtn.style.left = `${rect.left}px`;
-          noBtn.style.top = `${rect.top}px`;
+          noBtn.style.left = `${originalLeft}px`;
+          noBtn.style.top = `${originalTop}px`;
           noBtn.style.margin = '0';
           noBtn.style.zIndex = '999999';
+          
+          // Force layout reflow
+          noBtn.offsetHeight;
+          
+          // Re-enable stylesheet transitions
+          noBtn.style.transition = '';
         }
         
         // Calculate angle of push away from cursor
@@ -1142,28 +1159,44 @@
         };
         
         let attempts = 0;
-        // Adjust angle if it overlaps the Yes button
-        while (attempts < 10 && overlapsYes(targetX, targetY)) {
-          const altAngle = driftAngle + Math.PI / 2 + (Math.random() - 0.5) * 0.5;
-          targetX = rect.left + Math.cos(altAngle) * leapDistance;
-          targetY = rect.top + Math.sin(altAngle) * leapDistance;
+        let foundValid = false;
+        // Adjust angle if it overlaps the Yes button, falling back to viewport coordinates if stuck
+        while (attempts < 50) {
+          if (attempts > 10) {
+            // Fallback: Generate completely random viewport coordinates that are safe
+            targetX = pad + Math.random() * (maxX - pad);
+            targetY = pad + Math.random() * (maxY - pad);
+          } else {
+            // Leap away direction with search drift increments
+            const testAngle = driftAngle + (attempts * Math.PI / 4) + (Math.random() - 0.5) * 0.2;
+            targetX = rect.left + Math.cos(testAngle) * leapDistance;
+            targetY = rect.top + Math.sin(testAngle) * leapDistance;
+            
+            // Clamp to viewport edges
+            if (targetX < pad) targetX = pad;
+            if (targetX > maxX) targetX = maxX;
+            if (targetY < pad) targetY = pad;
+            if (targetY > maxY) targetY = maxY;
+          }
           
-          // Clamp bounds again
-          if (targetX < pad) targetX = pad;
-          if (targetX > maxX) targetX = maxX;
-          if (targetY < pad) targetY = pad;
-          if (targetY > maxY) targetY = maxY;
+          const distToCursor = Math.sqrt(Math.pow(targetX + rect.width/2 - e.clientX, 2) + Math.pow(targetY + rect.height/2 - e.clientY, 2));
           
+          if (distToCursor >= 130 && !overlapsYes(targetX, targetY)) {
+            foundValid = true;
+            break;
+          }
           attempts++;
         }
         
-        noBtn.style.left = `${targetX}px`;
-        noBtn.style.top = `${targetY}px`;
+        // Apply GPU-accelerated translation relative to original anchor layout
+        const dx = targetX - originalLeft;
+        const dy = targetY - originalTop;
+        noBtn.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
         
-        // Cool down timer matches CSS transition speed (350ms)
+        // Cool down timer matches CSS transition speed (220ms)
         setTimeout(() => {
           isMoving = false;
-        }, 350);
+        }, 220);
       }
     };
     
@@ -1172,6 +1205,11 @@
     // Yes button action
     yesBtn.addEventListener('click', () => {
       document.removeEventListener('mousemove', handleNoButtonRepel);
+      
+      // Clean up the repelled No button from document body if it exists
+      if (noBtn && noBtn.parentNode) {
+        noBtn.remove();
+      }
       
       // Play a quick whoosh transition sound on click if sound FX is loaded
       if (typeof SFX !== 'undefined' && typeof SFX.whoosh === 'function') {
@@ -1213,12 +1251,30 @@
             Animations.Celebration.start();
           }
           
-          // Display Once again happy birthday madam
+          // Display Once again happy birthday madam with id for fading
           modal.innerHTML = `
             <div class="happy-modal-flourish flourish-gold-blast">✦ ✦ ✦</div>
-            <h1 class="happy-modal-final-title">Once again happy birthday madam</h1>
+            <h1 id="final-bday-title" class="happy-modal-final-title">Once again happy birthday madam</h1>
             <div class="happy-modal-flourish">✦</div>
           `;
+          
+          // Slowly fade out the title after 5 seconds and display the Tamil message
+          setTimeout(() => {
+            const titleEl = modal.querySelector('#final-bday-title');
+            if (titleEl) {
+              titleEl.classList.add('faded');
+              
+              // Wait 1.5s for fade-out to complete, then replace and fade in Tamil text
+              setTimeout(() => {
+                titleEl.className = 'happy-modal-tamil-text';
+                titleEl.textContent = 'indha ilippu eppavum un moonji la irundhutee irukanum';
+                
+                // Force layout reflow before triggering fade-in transition
+                titleEl.offsetHeight;
+                titleEl.classList.add('visible');
+              }, 1500);
+            }
+          }, 5000);
         }, 800);
       }, 60000);
     });

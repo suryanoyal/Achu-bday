@@ -3353,7 +3353,7 @@ body {
   background: rgba(255, 255, 255, 0.01);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--white-muted);
-  transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1), top 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+  transition: transform 0.22s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s ease;
 }
 
 .happy-modal-gift-text {
@@ -3382,6 +3382,31 @@ body {
   animation: shimmer 4s ease-in-out infinite, textGlowPulse 4s ease-in-out infinite alternate;
   margin-top: 1rem;
   margin-bottom: 1.5rem;
+  opacity: 1;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.happy-modal-final-title.faded {
+  opacity: 0;
+}
+
+.happy-modal-tamil-text {
+  font-family: var(--font-elegant);
+  font-style: italic;
+  font-size: clamp(1.4rem, 3.5vw, 1.9rem);
+  font-weight: 300;
+  color: var(--gold-light);
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.happy-modal-tamil-text.visible {
+  opacity: 1;
 }
 
 /* ─── Premium Gift Box Animation ───────────────────────────── */
