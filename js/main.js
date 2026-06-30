@@ -75,6 +75,7 @@
     Animations.initFinaleObserver();
     initScrollProgress();
     initMusicControl();
+    initScrollToBottomModal();
   }
 
   /* ─── SCROLL PROGRESS ───────────────────────────────────── */
@@ -1033,6 +1034,194 @@
           }
         }
       });
+  }
+
+  /* ─── BOTTOM SCROLL Surpirse Modal ───────────────────────── */
+  let scrollTriggered = false;
+
+  function initScrollToBottomModal() {
+    window.addEventListener('scroll', () => {
+      if (scrollTriggered) return;
+      
+      const mainContent = document.getElementById('main-content');
+      if (!mainContent || window.getComputedStyle(mainContent).display === 'none') return;
+      
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      const scrollPos = window.scrollY || window.pageYOffset || document.body.scrollTop;
+      
+      // Trigger when within 25px of the bottom of the page
+      if (scrollHeight - clientHeight - scrollPos <= 25) {
+        scrollTriggered = true;
+        showHappyQuestionModal();
+      }
+    });
+  }
+
+  function showHappyQuestionModal() {
+    if (document.getElementById('happy-question-overlay')) return;
+
+    // Create overlay element
+    const overlay = document.createElement('div');
+    overlay.id = 'happy-question-overlay';
+    overlay.className = 'happy-modal-overlay';
+    
+    // Create content element
+    const modal = document.createElement('div');
+    modal.className = 'happy-modal-content';
+    modal.innerHTML = `
+      <div class="happy-modal-flourish">✦</div>
+      <h2 class="happy-modal-question">Happy ?????</h2>
+      <div class="happy-modal-buttons">
+        <button id="happy-yes-btn" class="happy-btn happy-btn-yes">Yes</button>
+        <button id="happy-no-btn" class="happy-btn happy-btn-no">No</button>
+      </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const noBtn = modal.querySelector('#happy-no-btn');
+    const yesBtn = modal.querySelector('#happy-yes-btn');
+    
+    let isMoving = false;
+    
+    // Mouse movement repel logic allowing button to escape cursor push smoothly
+    const handleNoButtonRepel = (e) => {
+      if (!noBtn || isMoving) return;
+      
+      const rect = noBtn.getBoundingClientRect();
+      const buttonCenterX = rect.left + rect.width / 2;
+      const buttonCenterY = rect.top + rect.height / 2;
+      
+      const distanceToCursor = Math.sqrt(Math.pow(e.clientX - buttonCenterX, 2) + Math.pow(e.clientY - buttonCenterY, 2));
+      
+      // Repel if the cursor gets within 90px of the button center
+      if (distanceToCursor < 90) {
+        isMoving = true;
+        
+        // Convert to fixed coordinate mapping so it can slide anywhere on screen
+        if (noBtn.style.position !== 'fixed') {
+          noBtn.style.position = 'fixed';
+          noBtn.style.left = `${rect.left}px`;
+          noBtn.style.top = `${rect.top}px`;
+          noBtn.style.margin = '0';
+          noBtn.style.zIndex = '999999';
+        }
+        
+        // Calculate angle of push away from cursor
+        const angle = Math.atan2(buttonCenterY - e.clientY, buttonCenterX - e.clientX);
+        // Add a slight random variation to the angle (up to 20 degrees) so it drifts organically
+        const driftAngle = angle + (Math.random() - 0.5) * 0.35;
+        // Escape distance: Leap between 180px and 280px
+        const leapDistance = 180 + Math.random() * 100;
+        
+        let targetX = rect.left + Math.cos(driftAngle) * leapDistance;
+        let targetY = rect.top + Math.sin(driftAngle) * leapDistance;
+        
+        // Boundaries with screen margin
+        const pad = 40;
+        const maxX = window.innerWidth - rect.width - pad;
+        const maxY = window.innerHeight - rect.height - pad;
+        
+        // Bounce off screen boundaries
+        if (targetX < pad) targetX = pad + Math.random() * 40;
+        if (targetX > maxX) targetX = maxX - Math.random() * 40;
+        if (targetY < pad) targetY = pad + Math.random() * 40;
+        if (targetY > maxY) targetY = maxY - Math.random() * 40;
+        
+        // Yes button rectangle
+        const yesRect = yesBtn.getBoundingClientRect();
+        
+        const overlapsYes = (x, y) => {
+          const buffer = 85; // Buffer to prevent button landing on/behind the Yes button
+          return !(x + rect.width < yesRect.left - buffer || 
+                   x > yesRect.right + buffer || 
+                   y + rect.height < yesRect.top - buffer || 
+                   y > yesRect.bottom + buffer);
+        };
+        
+        let attempts = 0;
+        // Adjust angle if it overlaps the Yes button
+        while (attempts < 10 && overlapsYes(targetX, targetY)) {
+          const altAngle = driftAngle + Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+          targetX = rect.left + Math.cos(altAngle) * leapDistance;
+          targetY = rect.top + Math.sin(altAngle) * leapDistance;
+          
+          // Clamp bounds again
+          if (targetX < pad) targetX = pad;
+          if (targetX > maxX) targetX = maxX;
+          if (targetY < pad) targetY = pad;
+          if (targetY > maxY) targetY = maxY;
+          
+          attempts++;
+        }
+        
+        noBtn.style.left = `${targetX}px`;
+        noBtn.style.top = `${targetY}px`;
+        
+        // Cool down timer matches CSS transition speed (350ms)
+        setTimeout(() => {
+          isMoving = false;
+        }, 350);
+      }
+    };
+    
+    document.addEventListener('mousemove', handleNoButtonRepel);
+    
+    // Yes button action
+    yesBtn.addEventListener('click', () => {
+      document.removeEventListener('mousemove', handleNoButtonRepel);
+      
+      // Play a quick whoosh transition sound on click if sound FX is loaded
+      if (typeof SFX !== 'undefined' && typeof SFX.whoosh === 'function') {
+        SFX.whoosh();
+      }
+      
+      modal.innerHTML = `
+        <div class="happy-modal-flourish">✦</div>
+        <div id="gift-box-wrapper" class="gift-box-container">
+          <div class="gift-box">
+            <div class="gift-bow"></div>
+            <div class="gift-lid"></div>
+            <div class="gift-ribbon-vertical"></div>
+            <div class="gift-ribbon-horizontal"></div>
+            <div class="gift-body"></div>
+          </div>
+        </div>
+        <h2 class="happy-modal-gift-text">Ask Devi for your gift</h2>
+        <div class="happy-modal-flourish">✦</div>
+      `;
+      
+      // Wait for 1 minute (60,000ms) in background silently
+      setTimeout(() => {
+        // Trigger box opening lid-pop transition first
+        const giftContainer = modal.querySelector('#gift-box-wrapper');
+        if (giftContainer) {
+          giftContainer.classList.add('open');
+        }
+        
+        // Play final opening whoosh sound FX
+        if (typeof SFX !== 'undefined' && typeof SFX.whoosh === 'function') {
+          setTimeout(() => SFX.whoosh(), 100);
+        }
+        
+        // Short delay for the lid pop transition to complete (800ms) before the title blast
+        setTimeout(() => {
+          // Re-trigger celebration confetti blast once again (continuous)
+          if (typeof Animations !== 'undefined' && Animations.Celebration) {
+            Animations.Celebration.start();
+          }
+          
+          // Display Once again happy birthday madam
+          modal.innerHTML = `
+            <div class="happy-modal-flourish flourish-gold-blast">✦ ✦ ✦</div>
+            <h1 class="happy-modal-final-title">Once again happy birthday madam</h1>
+            <div class="happy-modal-flourish">✦</div>
+          `;
+        }, 800);
+      }, 60000);
+    });
   }
 
 })();

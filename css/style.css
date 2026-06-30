@@ -412,7 +412,7 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 99999;
+  z-index: 100000; /* Always on top of everything, including confetti and overlays */
   pointer-events: none;
 }
 
@@ -3117,12 +3117,12 @@ body {
    CELEBRATION SCREEN & CONFETTI
    ═══════════════════════════════════════════════════════════════ */
 .celebration-canvas {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999; /* Higher than modal overlay (99998) so it blasts on top */
   pointer-events: none;
 }
 
@@ -3237,5 +3237,285 @@ body {
 @keyframes textGlowPulse {
   0% { filter: drop-shadow(0 0 2px rgba(201, 168, 76, 0.2)); }
   100% { filter: drop-shadow(0 0 15px rgba(201, 168, 76, 0.6)); }
+}
+
+/* ─── Interactive Scroll Surprise Modal ────────────────────── */
+.happy-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 6, 6, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99998; /* Under custom cursor but above everything else */
+  opacity: 0;
+  animation: modalFadeIn 0.6s var(--ease-out-expo) forwards;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.happy-modal-content {
+  background: linear-gradient(135deg, rgba(22, 21, 18, 0.95), rgba(15, 14, 12, 0.98));
+  border: 1px solid rgba(201, 168, 76, 0.18);
+  border-radius: var(--radius-xl);
+  padding: clamp(2rem, 5vw, 3.5rem);
+  text-align: center;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 
+    0 24px 72px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(201, 168, 76, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transform: scale(0.95);
+  animation: modalScaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalScaleIn {
+  from { transform: scale(0.92) translateY(20px); }
+  to { transform: scale(1) translateY(0); }
+}
+
+.happy-modal-flourish {
+  font-size: 0.75rem;
+  color: var(--gold-dim);
+  letter-spacing: 0.5em;
+  margin-bottom: 1.5rem;
+  opacity: 0.6;
+}
+
+.flourish-gold-blast {
+  font-size: 1rem;
+  color: var(--gold);
+  text-shadow: 0 0 15px rgba(201, 168, 76, 0.4);
+  animation: flourishTwinkle 1.5s ease-in-out infinite alternate;
+}
+
+.happy-modal-question {
+  font-family: var(--font-editorial);
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 500;
+  color: var(--gold-light);
+  margin-bottom: 2.5rem;
+  text-shadow: 0 0 25px rgba(201, 168, 76, 0.15);
+  letter-spacing: 0.02em;
+}
+
+.happy-modal-buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+  min-height: 60px;
+  align-items: center;
+}
+
+.happy-btn {
+  font-family: var(--font-luxury-clean);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  padding: 0.9rem 2.2rem;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.happy-btn-yes {
+  background: rgba(201, 168, 76, 0.06);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold-light);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.happy-btn-yes:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--bg-primary);
+  box-shadow: 0 0 30px rgba(201, 168, 76, 0.4);
+  transform: translateY(-2px);
+}
+
+.happy-btn-no {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--white-muted);
+  transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1), top 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+.happy-modal-gift-text {
+  font-family: var(--font-elegant);
+  font-style: italic;
+  font-size: clamp(1.4rem, 3.5vw, 1.85rem);
+  color: var(--white-soft);
+  margin-bottom: 2rem;
+  font-weight: 300;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  animation: modalFadeIn 0.8s ease forwards;
+}
+
+.happy-modal-final-title {
+  font-family: var(--font-luxury);
+  font-size: clamp(2.2rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold-bright), var(--gold), var(--gold-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 200% 200%;
+  animation: shimmer 4s ease-in-out infinite, textGlowPulse 4s ease-in-out infinite alternate;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ─── Premium Gift Box Animation ───────────────────────────── */
+.gift-box-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0.5rem auto 1.5rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 600px;
+}
+
+.gift-box {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  transform-style: preserve-3d;
+  animation: giftFloat 3s ease-in-out infinite alternate, giftGlow 2.5s ease-in-out infinite alternate;
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gift-body {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 46px;
+  background: linear-gradient(135deg, rgba(201, 168, 76, 0.15), rgba(201, 168, 76, 0.05));
+  border: 2px solid var(--gold-dim);
+  border-radius: 0 0 6px 6px;
+  z-index: 1;
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gift-lid {
+  position: absolute;
+  top: 10px;
+  left: -3px;
+  width: 66px;
+  height: 14px;
+  background: linear-gradient(90deg, var(--gold-light), var(--gold-bright));
+  border: 1px solid var(--gold-dim);
+  border-radius: 3px;
+  z-index: 5;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gift-ribbon-vertical {
+  position: absolute;
+  top: 10px;
+  left: 26px;
+  width: 8px;
+  height: 50px;
+  background: linear-gradient(to bottom, var(--gold-bright), var(--gold));
+  z-index: 3;
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gift-ribbon-horizontal {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  width: 60px;
+  height: 8px;
+  background: linear-gradient(to right, var(--gold-bright), var(--gold));
+  z-index: 3;
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gift-bow {
+  position: absolute;
+  top: -4px;
+  left: 14px;
+  width: 32px;
+  height: 16px;
+  z-index: 6;
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gift-bow::before, .gift-bow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--gold-bright);
+  border-radius: 50% 50% 0 50%;
+  background: rgba(201, 168, 76, 0.25);
+}
+
+.gift-bow::before {
+  left: 0;
+  transform: rotate(-15deg);
+}
+
+.gift-bow::after {
+  right: 0;
+  transform: rotate(105deg) scaleY(-1);
+}
+
+/* Animations Keyframes */
+@keyframes giftFloat {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(1.5deg); }
+  100% { transform: translateY(0) rotate(-1.5deg); }
+}
+
+@keyframes giftGlow {
+  0% { filter: drop-shadow(0 0 6px rgba(201, 168, 76, 0.25)); }
+  100% { filter: drop-shadow(0 0 16px rgba(201, 168, 76, 0.65)); }
+}
+
+/* Open/Unbox transition */
+.gift-box-container.open .gift-lid {
+  transform: translateY(-40px) rotate(35deg) scale(0.9);
+  opacity: 0;
+}
+
+.gift-box-container.open .gift-bow {
+  transform: translateY(-45px) rotate(-15deg) scale(0.9);
+  opacity: 0;
+}
+
+.gift-box-container.open .gift-body {
+  transform: scale(1.3);
+  opacity: 0;
+  filter: brightness(1.5) blur(1px);
+}
+
+.gift-box-container.open .gift-ribbon-vertical,
+.gift-box-container.open .gift-ribbon-horizontal {
+  opacity: 0;
 }
 
