@@ -231,9 +231,9 @@ const CountdownTimer = (() => {
     }
 
     // Destroy custom cursor
-    if (typeof GoldCursor !== 'undefined') {
-      GoldCursor.destroy();
-    }
+    // if (typeof GoldCursor !== 'undefined') {
+    //   GoldCursor.destroy();
+    // }
 
     // Fade out countdown content
     if (elements.info) {

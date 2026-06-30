@@ -861,12 +861,6 @@
         tags: [],
       },
       {
-        icon: `<img src="assets/icons/internet_icon_1781939918379.png" alt="Internet" class="tamilnadu-icon" loading="lazy">`,
-        title: 'Internet & Cyber Cafés',
-        content: tn.internet,
-        tags: [],
-      },
-      {
         icon: `<img src="assets/icons/technology_icon_1781939957175.png" alt="Technology" class="tamilnadu-icon" loading="lazy">`,
         title: 'Technology',
         content: tn.technology,
