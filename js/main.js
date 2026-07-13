@@ -6,8 +6,74 @@
 (function () {
   'use strict';
 
+  // Global references for YouTube hover preview players
+  const previewPlayers = {};
+
+  // Handle YouTube Iframe API initialization
+  window.onYouTubeIframeAPIReady = function () {
+    const tamilSongs = BIRTHDAY_DATA?.music?.tamil;
+    const popup = document.getElementById('youtube-hover-preview');
+    if (!popup || !tamilSongs) return;
+
+    tamilSongs.forEach(song => {
+      if (!song.youtubeId) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.id = `player-wrapper-${song.youtubeId}`;
+      wrapper.className = 'preview-player-wrapper';
+      wrapper.style.display = 'none';
+      wrapper.style.width = '100%';
+      wrapper.style.height = '100%';
+
+      const playerDiv = document.createElement('div');
+      playerDiv.id = `yt-player-${song.youtubeId}`;
+      wrapper.appendChild(playerDiv);
+      popup.appendChild(wrapper);
+
+      previewPlayers[song.youtubeId] = new YT.Player(`yt-player-${song.youtubeId}`, {
+        height: '100%',
+        width: '100%',
+        videoId: song.youtubeId,
+        playerVars: {
+          start: song.previewStart || 0,
+          controls: 0,
+          disablekb: 1,
+          fs: 0,
+          modestbranding: 1,
+          rel: 0,
+          showinfo: 0,
+          iv_load_policy: 3,
+          autoplay: 0,
+          mute: 0
+        },
+        events: {
+          onReady: (event) => {
+            // Seek to start position and pause to cache the buffer
+            event.target.seekTo(song.previewStart || 0, true);
+            event.target.pauseVideo();
+          }
+        }
+      });
+    });
+  };
+
   /* ─── INITIALIZATION ─────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', () => {
+    // Create the global hover preview popup container early
+    let popup = document.getElementById('youtube-hover-preview');
+    if (!popup) {
+      popup = document.createElement('div');
+      popup.id = 'youtube-hover-preview';
+      popup.className = 'youtube-preview-popup';
+      document.body.appendChild(popup);
+    }
+
+    // Load YouTube Iframe Player API script dynamically
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
     // Initialize particles (always visible, even during countdown)
     Animations.ParticleSystem.init();
 
@@ -770,6 +836,30 @@
     `;
   }
 
+  function positionPopup(popup, e) {
+    const popupWidth = 320;
+    const popupHeight = 180;
+    
+    // Position 15px down and right from cursor
+    let x = e.clientX + 15;
+    let y = e.clientY + 15;
+    
+    // Keep within viewport boundaries
+    if (x + popupWidth > window.innerWidth) {
+      x = e.clientX - popupWidth - 15;
+    }
+    if (y + popupHeight > window.innerHeight) {
+      y = e.clientY - popupHeight - 15;
+    }
+    
+    // Fallback safety checks
+    if (x < 10) x = 10;
+    if (y < 10) y = 10;
+    
+    popup.style.left = `${x}px`;
+    popup.style.top = `${y}px`;
+  }
+
   function renderMusicGrid(containerId, songs) {
     const container = document.getElementById(containerId);
     if (!container || !songs) return;
@@ -791,6 +881,86 @@
           </div>
         </div>
       `;
+
+      // Hover preview features only for Tamil songs
+      if (containerId === 'music-tamil' && song.youtubeId) {
+        let hoverTimeout;
+        let wasPlaying = false;
+
+        card.addEventListener('mouseenter', (e) => {
+          card.classList.add('previewing');
+          card.style.setProperty('--card-accent-glow', `${song.color}66`);
+
+          hoverTimeout = setTimeout(() => {
+            const player = previewPlayers[song.youtubeId];
+            if (player && typeof player.playVideo === 'function') {
+              // Pause background music if it is currently playing
+              const bgAudio = document.getElementById('bg-music');
+              wasPlaying = bgAudio && !bgAudio.paused;
+              if (wasPlaying && typeof window.pauseMusic === 'function') {
+                window.pauseMusic();
+              }
+
+              // Hide all other players, show this one
+              document.querySelectorAll('.preview-player-wrapper').forEach(wrapper => {
+                wrapper.style.display = 'none';
+              });
+              const activeWrapper = document.getElementById(`player-wrapper-${song.youtubeId}`);
+              if (activeWrapper) {
+                activeWrapper.style.display = 'block';
+              }
+
+              let popup = document.getElementById('youtube-hover-preview');
+              if (popup) {
+                popup.style.setProperty('--preview-accent', song.color);
+                popup.style.display = 'block';
+                requestAnimationFrame(() => {
+                  popup.classList.add('show');
+                });
+                positionPopup(popup, e);
+              }
+
+              // Play cached player at start time
+              player.seekTo(song.previewStart || 0, true);
+              player.playVideo();
+            }
+          }, 200); // 200ms delay to start playing quickly
+        });
+
+        card.addEventListener('mousemove', (e) => {
+          const popup = document.getElementById('youtube-hover-preview');
+          if (popup && popup.style.display === 'block') {
+            positionPopup(popup, e);
+          }
+        });
+
+        card.addEventListener('mouseleave', () => {
+          card.classList.remove('previewing');
+          clearTimeout(hoverTimeout);
+
+          const player = previewPlayers[song.youtubeId];
+          if (player && typeof player.pauseVideo === 'function') {
+            player.pauseVideo();
+          }
+
+          const popup = document.getElementById('youtube-hover-preview');
+          if (popup) {
+            popup.classList.remove('show');
+            setTimeout(() => {
+              if (!popup.classList.contains('show')) {
+                popup.style.display = 'none';
+              }
+            }, 250);
+          }
+
+          // Resume background music if it was playing before
+          if (wasPlaying && typeof window.playMusic === 'function') {
+            window.playMusic();
+            wasPlaying = false;
+          }
+        });
+      }
+
       container.appendChild(card);
     });
   }

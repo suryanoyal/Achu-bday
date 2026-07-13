@@ -3544,3 +3544,54 @@ body {
   opacity: 0;
 }
 
+/* ─── YOUTUBE HOVER PREVIEW POPUP ────────────────────────── */
+.youtube-preview-popup {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.15);
+  width: 320px;
+  height: 180px;
+  background: #000;
+  transition: opacity 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform: scale(0.9);
+  opacity: 0;
+  display: none;
+}
+
+.youtube-preview-popup.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.youtube-preview-popup iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Subtle accent border matching the hovered song's theme color */
+.youtube-preview-popup::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--preview-accent, #ff3366);
+  z-index: 10;
+}
+
+.music-card {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Card highlight when hovering/previewing */
+.music-card.previewing {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 16px var(--card-accent-glow);
+  transform: translateY(-4px) scale(1.02);
+  z-index: 5;
+}
+
