@@ -111,7 +111,7 @@ const BIRTHDAY_DATA = {
       artist: "Beyoncé ft. Jay-Z",
       album: "Dangerously in Love",
       weeksAtOne: 8,
-      spotifyUrl: "https://open.spotify.com/track/5IVuqXILoxVWvWEPm82Bkj",
+      spotifyUrl: "https://open.spotify.com/track/5IVuqXILoxVWvWEPm82Jxr",
       youtubeUrl: "https://www.youtube.com/watch?v=ViwtNLUqkMY",
       color: "#E8C547",
       image: "assets/images/crazy_in_love.png"
@@ -123,7 +123,8 @@ const BIRTHDAY_DATA = {
         artist: "Udit Narayan",
         music: "Rajesh Roshan",
         year: 2003,
-        youtubeUrl: "https://www.youtube.com/watch?v=mPMGRo-YECI",
+        spotifyUrl: "https://open.spotify.com/track/2akf1r1WP4mYY7zyRPzey0",
+        youtubeUrl: "https://www.youtube.com/watch?v=iQPg7ht5aHU",
         color: "#4FC3F7",
         image: "assets/images/koi_mil_gaya.jpg"
       },
@@ -133,7 +134,8 @@ const BIRTHDAY_DATA = {
         artist: "Alka Yagnik, Aadesh Shrivastava",
         music: "Jatin-Lalit",
         year: 2003,
-        youtubeUrl: "https://www.youtube.com/watch?v=tD6h_4WQGSY",
+        spotifyUrl: "https://open.spotify.com/track/4jVnK5M8Pq3v7b8P2v8Jp7",
+        youtubeUrl: "https://www.youtube.com/watch?v=rkOakcMqJ-8",
         color: "#EF5350",
         image: "assets/images/chalte_chalte.jpg"
       },
@@ -143,7 +145,8 @@ const BIRTHDAY_DATA = {
         artist: "K.K., Shaan",
         music: "Anu Malik",
         year: 2003,
-        youtubeUrl: "https://www.youtube.com/watch?v=_WF5PD94R6Y",
+        spotifyUrl: "https://open.spotify.com/track/7lqM0m5t1F96WnB4G5N6J7",
+        youtubeUrl: "https://www.youtube.com/watch?v=YSF6OHGHJqM",
         color: "#FF7043",
         image: "assets/images/main_prem.jpg"
       }
@@ -155,29 +158,32 @@ const BIRTHDAY_DATA = {
         artist: "Haricharan, Shreya Ghoshal",
         music: "Harris Jayaraj",
         year: 2003,
-        youtubeUrl: "https://www.youtube.com/watch?v=2gj-U0q6VUQ",
+        spotifyUrl: "https://open.spotify.com/track/4C1K218wL1T9K117g44d7U",
+        youtubeUrl: "https://www.youtube.com/watch?v=xiCsLRdq1lU",
         color: "#AB47BC",
         image: "assets/images/kakha_kakha.jpg"
       },
       {
-        song: "Kadhal Vaithu",
+        song: "Ennai Konjam",
         film: "Kakha Kakha",
-        artist: "Tippu, Shakthisree Gopalan",
+        artist: "Timmy, Tippu, Pop Shalini",
         music: "Harris Jayaraj",
         year: 2003,
-        youtubeUrl: "https://www.youtube.com/watch?v=9zUKrl8qOSg",
+        spotifyUrl: "https://open.spotify.com/track/62uQ7S9W38s1j4gN296z0h",
+        youtubeUrl: "https://www.youtube.com/watch?v=6GxiCS2hrD8",
         color: "#26A69A",
         image: "assets/images/kakha_kakha.jpg"
       },
       {
-        song: "Boom Boom",
-        film: "Boys",
-        artist: "Adnan Sami, Shankar Mahadevan",
-        music: "A.R. Rahman",
+        song: "Devathaiyai Kanden",
+        film: "Kadhal Konden",
+        artist: "Harish Raghavendra",
+        music: "Yuvan Shankar Raja",
         year: 2003,
-        youtubeUrl: "https://www.youtube.com/watch?v=qpivIq40YPQ",
+        spotifyUrl: "",
+        youtubeUrl: "https://www.youtube.com/watch?v=v4K1ywf19xw",
         color: "#FFA726",
-        image: "assets/images/boys.jpg"
+        image: "assets/images/kadhal_konden.jpg"
       }
     ]
   },

@@ -764,7 +764,6 @@
         <div class="music-album">${b.album}</div>
         <div class="music-detail">${b.weeksAtOne} weeks at #1 on Billboard Hot 100</div>
         <div class="music-links">
-          ${b.spotifyUrl ? `<a href="${b.spotifyUrl}" target="_blank" rel="noopener" class="music-link">▶ Spotify</a>` : ''}
           ${b.youtubeUrl ? `<a href="${b.youtubeUrl}" target="_blank" rel="noopener" class="music-link">▶ YouTube</a>` : ''}
         </div>
       </div>
@@ -787,7 +786,9 @@
           <div class="music-card-song">${song.song}</div>
           <div class="music-card-artist">${song.artist}</div>
           <div class="music-card-film">from "${song.film}"</div>
-          ${song.youtubeUrl ? `<div class="music-card-link"><a href="${song.youtubeUrl}" target="_blank" rel="noopener" class="music-link">▶ YouTube</a></div>` : ''}
+          <div class="music-links" style="margin-top: 0.6rem; justify-content: flex-start; gap: 0.5rem;">
+            ${song.youtubeUrl ? `<a href="${song.youtubeUrl}" target="_blank" rel="noopener" class="music-link">▶ YouTube</a>` : ''}
+          </div>
         </div>
       `;
       container.appendChild(card);
