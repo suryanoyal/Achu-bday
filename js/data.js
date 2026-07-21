@@ -158,10 +158,8 @@ const BIRTHDAY_DATA = {
         artist: "Haricharan, Shreya Ghoshal",
         music: "Harris Jayaraj",
         year: 2003,
+        audioUrl: "assets/music/songs/Ondra-Iranda.mp3",
         spotifyUrl: "https://open.spotify.com/track/4C1K218wL1T9K117g44d7U",
-        youtubeUrl: "https://www.youtube.com/watch?v=TPo9BaMm0qI&list=RDTPo9BaMm0qI&start_radio=1",
-        youtubeId: "TPo9BaMm0qI",
-        previewStart: 9,
         color: "#AB47BC",
         image: "assets/images/kakha_kakha.jpg"
       },
@@ -171,10 +169,8 @@ const BIRTHDAY_DATA = {
         artist: "Timmy, Tippu, Pop Shalini",
         music: "Harris Jayaraj",
         year: 2003,
+        audioUrl: "assets/music/songs/ennai-konjam_Zr5wO2qb.mp3",
         spotifyUrl: "https://open.spotify.com/track/62uQ7S9W38s1j4gN296z0h",
-        youtubeUrl: "https://www.youtube.com/watch?v=6GxiCS2hrD8",
-        youtubeId: "6GxiCS2hrD8",
-        previewStart: 44,
         color: "#26A69A",
         image: "assets/images/kakha_kakha.jpg"
       },
@@ -184,10 +180,8 @@ const BIRTHDAY_DATA = {
         artist: "Harish Raghavendra",
         music: "Yuvan Shankar Raja",
         year: 2003,
+        audioUrl: "assets/music/songs/devathayai-kanden_uJ0OQBxN.mp3",
         spotifyUrl: "",
-        youtubeUrl: "https://www.youtube.com/watch?v=v4K1ywf19xw",
-        youtubeId: "v4K1ywf19xw",
-        previewStart: 32,
         color: "#FFA726",
         image: "assets/images/kadhal_konden.jpg"
       }

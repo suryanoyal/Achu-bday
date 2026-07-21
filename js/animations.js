@@ -581,6 +581,30 @@ const Animations = (() => {
       animId = requestAnimationFrame(animate);
     }
 
+    function burst(customX, customY) {
+      if (!canvas) {
+        init();
+      }
+      if (!canvas) return;
+
+      const originX = customX !== undefined ? customX : canvas.width / 2;
+      const originY = customY !== undefined ? customY : canvas.height;
+
+      if (customX !== undefined && customY !== undefined) {
+        blast(originX, originY, -90, 80);
+      } else {
+        blast(0, canvas.height, -45, 100);
+        blast(canvas.width, canvas.height, -135, 100);
+      }
+
+      playConfettiSound();
+
+      if (!active) {
+        active = true;
+        animate();
+      }
+    }
+
     function stop() {
       active = false;
       cancelAnimationFrame(animId);
@@ -590,7 +614,7 @@ const Animations = (() => {
       window.removeEventListener('resize', resize);
     }
 
-    return { init, start, stop };
+    return { init, start, burst, stop };
   })();
 
   /* ─── PUBLIC API ─────────────────────────────────────────── */

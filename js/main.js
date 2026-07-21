@@ -6,74 +6,8 @@
 (function () {
   'use strict';
 
-  // Global references for YouTube hover preview players
-  const previewPlayers = {};
-
-  // Handle YouTube Iframe API initialization
-  window.onYouTubeIframeAPIReady = function () {
-    const tamilSongs = BIRTHDAY_DATA?.music?.tamil;
-    const popup = document.getElementById('youtube-hover-preview');
-    if (!popup || !tamilSongs) return;
-
-    tamilSongs.forEach(song => {
-      if (!song.youtubeId) return;
-
-      const wrapper = document.createElement('div');
-      wrapper.id = `player-wrapper-${song.youtubeId}`;
-      wrapper.className = 'preview-player-wrapper';
-      wrapper.style.display = 'none';
-      wrapper.style.width = '100%';
-      wrapper.style.height = '100%';
-
-      const playerDiv = document.createElement('div');
-      playerDiv.id = `yt-player-${song.youtubeId}`;
-      wrapper.appendChild(playerDiv);
-      popup.appendChild(wrapper);
-
-      previewPlayers[song.youtubeId] = new YT.Player(`yt-player-${song.youtubeId}`, {
-        height: '100%',
-        width: '100%',
-        videoId: song.youtubeId,
-        playerVars: {
-          start: song.previewStart || 0,
-          controls: 0,
-          disablekb: 1,
-          fs: 0,
-          modestbranding: 1,
-          rel: 0,
-          showinfo: 0,
-          iv_load_policy: 3,
-          autoplay: 0,
-          mute: 0
-        },
-        events: {
-          onReady: (event) => {
-            // Seek to start position and pause to cache the buffer
-            event.target.seekTo(song.previewStart || 0, true);
-            event.target.pauseVideo();
-          }
-        }
-      });
-    });
-  };
-
   /* ─── INITIALIZATION ─────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', () => {
-    // Create the global hover preview popup container early
-    let popup = document.getElementById('youtube-hover-preview');
-    if (!popup) {
-      popup = document.createElement('div');
-      popup.id = 'youtube-hover-preview';
-      popup.className = 'youtube-preview-popup';
-      document.body.appendChild(popup);
-    }
-
-    // Load YouTube Iframe Player API script dynamically
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
     // Initialize particles (always visible, even during countdown)
     Animations.ParticleSystem.init();
 
@@ -141,6 +75,7 @@
     Animations.initFinaleObserver();
     initScrollProgress();
     initMusicControl();
+    initSoundtrackScrollObserver();
     initScrollToBottomModal();
   }
 
@@ -154,6 +89,40 @@
       const scrolled = (window.scrollY / scrollHeight) * 100;
       bar.style.width = scrolled + '%';
     }, { passive: true });
+  }
+
+  /* ─── SOUNDTRACK SCROLL OBSERVER ────────────────────────── */
+  function initSoundtrackScrollObserver() {
+    const soundtrackSection = document.getElementById('soundtrack');
+    if (!soundtrackSection) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) {
+          let wasAnyPlaying = false;
+
+          document.querySelectorAll('.gramophone-audio').forEach(audio => {
+            if (!audio.paused) {
+              audio.pause();
+              audio.currentTime = 0;
+              wasAnyPlaying = true;
+              const card = audio.closest('.gramophone-card');
+              if (card) {
+                card.classList.remove('playing');
+              }
+            }
+          });
+
+          if (wasAnyPlaying && typeof window.playMusic === 'function') {
+            window.playMusic();
+          }
+        }
+      });
+    }, {
+      threshold: 0.05
+    });
+
+    observer.observe(soundtrackSection);
   }
 
   /* ─── MUSIC CONTROL ─────────────────────────────────────── */
@@ -860,105 +829,151 @@
     popup.style.top = `${y}px`;
   }
 
+  function formatTime(seconds) {
+    if (isNaN(seconds) || seconds < 0) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+
   function renderMusicGrid(containerId, songs) {
     const container = document.getElementById(containerId);
     if (!container || !songs) return;
 
-    songs.forEach(song => {
+    songs.forEach((song, songIndex) => {
       const card = document.createElement('div');
-      card.className = 'music-card';
-      card.innerHTML = `
-        <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${song.color};border-radius:12px 0 0 12px;"></div>
-        <div class="music-card-artwork">
-          ${song.image ? `<img src="${song.image}" alt="${song.song}" class="music-card-poster-img">` : '🎶'}
-        </div>
-        <div class="music-card-info">
-          <div class="music-card-song">${song.song}</div>
-          <div class="music-card-artist">${song.artist}</div>
-          <div class="music-card-film">from "${song.film}"</div>
-          <div class="music-links" style="margin-top: 0.6rem; justify-content: flex-start; gap: 0.5rem;">
-            ${song.youtubeUrl ? `<a href="${song.youtubeUrl}" target="_blank" rel="noopener" class="music-link">▶ YouTube</a>` : ''}
+      
+      if (containerId === 'music-tamil') {
+        card.className = 'gramophone-card reveal-item';
+        card.style.setProperty('--accent', song.color);
+        
+        card.innerHTML = `
+          <div class="gramophone-accent-bar" style="background:${song.color}"></div>
+          <div class="gramophone-stage">
+            <!-- Vintage Vinyl Record -->
+            <div class="gramophone-vinyl">
+              <div class="vinyl-groove-lines"></div>
+              <div class="vinyl-reflection"></div>
+              <div class="vinyl-center-label" style="background-image: url('${song.image}')">
+                <div class="vinyl-spindle-hole"></div>
+              </div>
+            </div>
+            
+            <!-- Metallic Tonearm Needle -->
+            <div class="gramophone-arm-assembly">
+              <div class="gramophone-arm-base"></div>
+              <div class="gramophone-arm-rod"></div>
+              <div class="gramophone-arm-head"></div>
+            </div>
+
+            <!-- Album Art Cover -->
+            <div class="gramophone-cover">
+              ${song.image ? `<img src="${song.image}" alt="${song.song}" class="gramophone-cover-img">` : '🎶'}
+              <div class="gramophone-cover-badge">VINYL 33⅓ RPM</div>
+            </div>
           </div>
-        </div>
-      `;
 
-      // Hover preview features only for Tamil songs
-      if (containerId === 'music-tamil' && song.youtubeId) {
-        let hoverTimeout;
-        let wasPlaying = false;
+          <div class="gramophone-info">
+            <div class="gramophone-song-title">${song.song}</div>
+            <div class="gramophone-artist">${song.artist}</div>
+            <div class="gramophone-film">from "${song.film}"</div>
+          </div>
 
-        card.addEventListener('mouseenter', (e) => {
-          card.classList.add('previewing');
-          card.style.setProperty('--card-accent-glow', `${song.color}66`);
+          <audio class="gramophone-audio" src="${song.audioUrl || ''}" preload="metadata"></audio>
+        `;
 
-          hoverTimeout = setTimeout(() => {
-            const player = previewPlayers[song.youtubeId];
-            if (player && typeof player.playVideo === 'function') {
-              // Pause background music if it is currently playing
-              const bgAudio = document.getElementById('bg-music');
-              wasPlaying = bgAudio && !bgAudio.paused;
-              if (wasPlaying && typeof window.pauseMusic === 'function') {
-                window.pauseMusic();
+        const audio = card.querySelector('.gramophone-audio');
+        let wasBgMusicPlaying = false;
+
+        function playAudio() {
+          if (!audio || !audio.paused) return;
+
+          // Stop any other active gramophone track
+          document.querySelectorAll('.gramophone-audio').forEach(otherAudio => {
+            if (otherAudio !== audio && !otherAudio.paused) {
+              otherAudio.pause();
+              otherAudio.currentTime = 0;
+              const otherCard = otherAudio.closest('.gramophone-card');
+              if (otherCard) {
+                otherCard.classList.remove('playing');
               }
-
-              // Hide all other players, show this one
-              document.querySelectorAll('.preview-player-wrapper').forEach(wrapper => {
-                wrapper.style.display = 'none';
-              });
-              const activeWrapper = document.getElementById(`player-wrapper-${song.youtubeId}`);
-              if (activeWrapper) {
-                activeWrapper.style.display = 'block';
-              }
-
-              let popup = document.getElementById('youtube-hover-preview');
-              if (popup) {
-                popup.style.setProperty('--preview-accent', song.color);
-                popup.style.display = 'block';
-                requestAnimationFrame(() => {
-                  popup.classList.add('show');
-                });
-                positionPopup(popup, e);
-              }
-
-              // Play cached player at start time
-              player.seekTo(song.previewStart || 0, true);
-              player.playVideo();
             }
-          }, 200); // 200ms delay to start playing quickly
-        });
+          });
 
-        card.addEventListener('mousemove', (e) => {
-          const popup = document.getElementById('youtube-hover-preview');
-          if (popup && popup.style.display === 'block') {
-            positionPopup(popup, e);
+          // Pause background music
+          const bgAudio = document.getElementById('bg-music');
+          if (bgAudio && !bgAudio.paused) {
+            wasBgMusicPlaying = true;
+            if (typeof window.pauseMusic === 'function') {
+              window.pauseMusic();
+            }
           }
+
+          // Reset track to start over
+          audio.currentTime = 0;
+
+          audio.play().then(() => {
+            card.classList.add('playing');
+          }).catch(err => {
+            console.warn('Gramophone audio play error:', err);
+          });
+        }
+
+        function stopAudio() {
+          if (!audio || audio.paused) return;
+          audio.pause();
+          audio.currentTime = 0;
+          card.classList.remove('playing');
+
+          if (wasBgMusicPlaying && typeof window.playMusic === 'function') {
+            window.playMusic();
+            wasBgMusicPlaying = false;
+          }
+        }
+
+        // Hover gives animation only (card elevate & vinyl slide out)
+        card.addEventListener('mouseenter', () => {
+          card.classList.add('hovered');
         });
 
         card.addEventListener('mouseleave', () => {
-          card.classList.remove('previewing');
-          clearTimeout(hoverTimeout);
+          card.classList.remove('hovered');
+        });
 
-          const player = previewPlayers[song.youtubeId];
-          if (player && typeof player.pauseVideo === 'function') {
-            player.pauseVideo();
-          }
-
-          const popup = document.getElementById('youtube-hover-preview');
-          if (popup) {
-            popup.classList.remove('show');
-            setTimeout(() => {
-              if (!popup.classList.contains('show')) {
-                popup.style.display = 'none';
-              }
-            }, 250);
-          }
-
-          // Resume background music if it was playing before
-          if (wasPlaying && typeof window.playMusic === 'function') {
-            window.playMusic();
-            wasPlaying = false;
+        // Tap/click to play or pause audio
+        card.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (audio && audio.paused) {
+            playAudio();
+          } else {
+            stopAudio();
           }
         });
+
+        audio.addEventListener('ended', () => {
+          card.classList.remove('playing');
+          if (wasBgMusicPlaying && typeof window.playMusic === 'function') {
+            window.playMusic();
+            wasBgMusicPlaying = false;
+          }
+        });
+
+      } else {
+        card.className = 'music-card';
+        card.innerHTML = `
+          <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${song.color};border-radius:12px 0 0 12px;"></div>
+          <div class="music-card-artwork">
+            ${song.image ? `<img src="${song.image}" alt="${song.song}" class="music-card-poster-img">` : '🎶'}
+          </div>
+          <div class="music-card-info">
+            <div class="music-card-song">${song.song}</div>
+            <div class="music-card-artist">${song.artist}</div>
+            <div class="music-card-film">from "${song.film}"</div>
+            <div class="music-links" style="margin-top: 0.6rem; justify-content: flex-start; gap: 0.5rem;">
+              ${song.youtubeUrl ? `<a href="${song.youtubeUrl}" target="_blank" rel="noopener" class="music-link">▶ YouTube</a>` : ''}
+            </div>
+          </div>
+        `;
       }
 
       container.appendChild(card);
@@ -1259,23 +1274,27 @@
     let originalLeft = null;
     let originalTop = null;
     
-    // Mouse movement repel logic allowing button to escape cursor push smoothly
+    // Mouse / Touch movement repel logic allowing button to escape cursor push smoothly
     const handleNoButtonRepel = (e) => {
       if (!noBtn || isMoving) return;
+      
+      const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+      
+      if (clientX === undefined || clientY === undefined) return;
       
       const rect = noBtn.getBoundingClientRect();
       const buttonCenterX = rect.left + rect.width / 2;
       const buttonCenterY = rect.top + rect.height / 2;
       
-      const distanceToCursor = Math.sqrt(Math.pow(e.clientX - buttonCenterX, 2) + Math.pow(e.clientY - buttonCenterY, 2));
+      const distanceToCursor = Math.sqrt(Math.pow(clientX - buttonCenterX, 2) + Math.pow(clientY - buttonCenterY, 2));
       
-      // Repel if the cursor gets within 105px of the button center
+      // Repel if the cursor/touch gets within 105px of the button center
       if (distanceToCursor < 105) {
         isMoving = true;
         
         // Convert to fixed coordinate mapping once to establish layout anchor
         if (originalLeft === null) {
-          // Temporarily disable transitions to prevent transition anomalies from auto layout styles
           noBtn.style.transition = 'none';
           
           originalLeft = rect.left;
@@ -1298,10 +1317,8 @@
         }
         
         // Calculate angle of push away from cursor
-        const angle = Math.atan2(buttonCenterY - e.clientY, buttonCenterX - e.clientX);
-        // Add a slight random variation to the angle (up to 20 degrees) so it drifts organically
+        const angle = Math.atan2(buttonCenterY - clientY, buttonCenterX - clientX);
         const driftAngle = angle + (Math.random() - 0.5) * 0.35;
-        // Escape distance: Leap between 180px and 280px
         const leapDistance = 180 + Math.random() * 100;
         
         let targetX = rect.left + Math.cos(driftAngle) * leapDistance;
@@ -1322,7 +1339,7 @@
         const yesRect = yesBtn.getBoundingClientRect();
         
         const overlapsYes = (x, y) => {
-          const buffer = 85; // Buffer to prevent button landing on/behind the Yes button
+          const buffer = 85;
           return !(x + rect.width < yesRect.left - buffer || 
                    x > yesRect.right + buffer || 
                    y + rect.height < yesRect.top - buffer || 
@@ -1330,41 +1347,33 @@
         };
         
         let attempts = 0;
-        let foundValid = false;
-        // Adjust angle if it overlaps the Yes button, falling back to viewport coordinates if stuck
         while (attempts < 50) {
           if (attempts > 10) {
-            // Fallback: Generate completely random viewport coordinates that are safe
             targetX = pad + Math.random() * (maxX - pad);
             targetY = pad + Math.random() * (maxY - pad);
           } else {
-            // Leap away direction with search drift increments
             const testAngle = driftAngle + (attempts * Math.PI / 4) + (Math.random() - 0.5) * 0.2;
             targetX = rect.left + Math.cos(testAngle) * leapDistance;
             targetY = rect.top + Math.sin(testAngle) * leapDistance;
             
-            // Clamp to viewport edges
             if (targetX < pad) targetX = pad;
             if (targetX > maxX) targetX = maxX;
             if (targetY < pad) targetY = pad;
             if (targetY > maxY) targetY = maxY;
           }
           
-          const distToCursor = Math.sqrt(Math.pow(targetX + rect.width/2 - e.clientX, 2) + Math.pow(targetY + rect.height/2 - e.clientY, 2));
+          const distToCursor = Math.sqrt(Math.pow(targetX + rect.width/2 - clientX, 2) + Math.pow(targetY + rect.height/2 - clientY, 2));
           
           if (distToCursor >= 130 && !overlapsYes(targetX, targetY)) {
-            foundValid = true;
             break;
           }
           attempts++;
         }
         
-        // Apply GPU-accelerated translation relative to original anchor layout
         const dx = targetX - originalLeft;
         const dy = targetY - originalTop;
         noBtn.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
         
-        // Cool down timer matches CSS transition speed (220ms)
         setTimeout(() => {
           isMoving = false;
         }, 220);
@@ -1372,10 +1381,18 @@
     };
     
     document.addEventListener('mousemove', handleNoButtonRepel);
+    document.addEventListener('touchstart', handleNoButtonRepel, { passive: true });
+    document.addEventListener('touchmove', handleNoButtonRepel, { passive: true });
+    
+    const removeRepelListeners = () => {
+      document.removeEventListener('mousemove', handleNoButtonRepel);
+      document.removeEventListener('touchstart', handleNoButtonRepel);
+      document.removeEventListener('touchmove', handleNoButtonRepel);
+    };
     
     // Yes button action
     yesBtn.addEventListener('click', () => {
-      document.removeEventListener('mousemove', handleNoButtonRepel);
+      removeRepelListeners();
       
       // Clean up the repelled No button from document body if it exists
       if (noBtn && noBtn.parentNode) {
@@ -1390,6 +1407,19 @@
       modal.innerHTML = `
         <div class="happy-modal-flourish">✦</div>
         <div id="gift-box-wrapper" class="gift-box-container">
+          <div class="gift-timer-ring-wrapper">
+            <svg class="gift-timer-ring-svg" viewBox="0 0 130 130">
+              <defs>
+                <linearGradient id="goldGradientTimer" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#f5e0a3" />
+                  <stop offset="50%" stop-color="#c9a84c" />
+                  <stop offset="100%" stop-color="#d4af37" />
+                </linearGradient>
+              </defs>
+              <circle class="gift-timer-ring-bg" cx="65" cy="65" r="58" />
+              <circle id="gift-progress-circle" class="gift-timer-ring-progress" cx="65" cy="65" r="58" />
+            </svg>
+          </div>
           <div class="gift-box">
             <div class="gift-bow"></div>
             <div class="gift-lid"></div>
@@ -1398,56 +1428,83 @@
             <div class="gift-body"></div>
           </div>
         </div>
-        <h2 class="happy-modal-gift-text">Ask Devi for your gift</h2>
+        <div class="gift-countdown-badge">
+          <div id="gift-timer-count" class="gift-timer-number">60s</div>
+          <h2 id="gift-status-text" class="happy-modal-gift-text">Ask Devi for your gift</h2>
+        </div>
         <div class="happy-modal-flourish">✦</div>
       `;
       
-      // Wait for 1 minute (60,000ms) in background silently
-      setTimeout(() => {
-        // Trigger box opening lid-pop transition first
-        const giftContainer = modal.querySelector('#gift-box-wrapper');
-        if (giftContainer) {
-          giftContainer.classList.add('open');
+      const totalTime = 60;
+      let timeLeft = totalTime;
+      const progressCircle = modal.querySelector('#gift-progress-circle');
+      const timerCount = modal.querySelector('#gift-timer-count');
+      const circumference = 364.42; // 2 * Math.PI * 58
+      
+      const countdownInterval = setInterval(() => {
+        timeLeft--;
+        
+        if (timerCount) {
+          timerCount.textContent = `${timeLeft}s`;
         }
         
-        // Play final opening whoosh sound FX
-        if (typeof SFX !== 'undefined' && typeof SFX.whoosh === 'function') {
-          setTimeout(() => SFX.whoosh(), 100);
+        if (progressCircle) {
+          const offset = circumference - (timeLeft / totalTime) * circumference;
+          progressCircle.style.strokeDashoffset = offset;
         }
         
-        // Short delay for the lid pop transition to complete (800ms) before the title blast
-        setTimeout(() => {
-          // Re-trigger celebration confetti blast once again (continuous)
-          if (typeof Animations !== 'undefined' && Animations.Celebration) {
-            Animations.Celebration.start();
+        if (typeof SFX !== 'undefined' && typeof SFX.tick === 'function') {
+          SFX.tick();
+        }
+        
+        if (timeLeft <= 0) {
+          clearInterval(countdownInterval);
+          
+          // Trigger box opening lid-pop transition first
+          const giftContainer = modal.querySelector('#gift-box-wrapper');
+          if (giftContainer) {
+            giftContainer.classList.add('open');
           }
           
-          // Display Once again happy birthday madam with id for fading
-          modal.innerHTML = `
-            <div class="happy-modal-flourish flourish-gold-blast">✦ ✦ ✦</div>
-            <h1 id="final-bday-title" class="happy-modal-final-title">Once again happy birthday madam</h1>
-            <div class="happy-modal-flourish">✦</div>
-          `;
+          // Play final opening whoosh sound FX
+          if (typeof SFX !== 'undefined' && typeof SFX.whoosh === 'function') {
+            setTimeout(() => SFX.whoosh(), 100);
+          }
           
-          // Slowly fade out the title after 5 seconds and display the Tamil message
+          // Short delay for the lid pop transition to complete (800ms) before the title blast
           setTimeout(() => {
-            const titleEl = modal.querySelector('#final-bday-title');
-            if (titleEl) {
-              titleEl.classList.add('faded');
-              
-              // Wait 1.5s for fade-out to complete, then replace and fade in Tamil text
-              setTimeout(() => {
-                titleEl.className = 'happy-modal-tamil-text';
-                titleEl.textContent = 'indha ilippu eppavum un moonji la irundhutee irukanum';
-                
-                // Force layout reflow before triggering fade-in transition
-                titleEl.offsetHeight;
-                titleEl.classList.add('visible');
-              }, 1500);
+            // Re-trigger celebration confetti blast once again (continuous)
+            if (typeof Animations !== 'undefined' && Animations.Celebration) {
+              Animations.Celebration.start();
             }
-          }, 5000);
-        }, 800);
-      }, 60000);
+            
+            // Display Once again happy birthday madam with id for fading
+            modal.innerHTML = `
+              <div class="happy-modal-flourish flourish-gold-blast">✦ ✦ ✦</div>
+              <h1 id="final-bday-title" class="happy-modal-final-title">Once again happy birthday madam</h1>
+              <div class="happy-modal-flourish">✦</div>
+            `;
+            
+            // Slowly fade out the title after 5 seconds and display the Tamil message
+            setTimeout(() => {
+              const titleEl = modal.querySelector('#final-bday-title');
+              if (titleEl) {
+                titleEl.classList.add('faded');
+                
+                // Wait 1.5s for fade-out to complete, then replace and fade in Tamil text
+                setTimeout(() => {
+                  titleEl.className = 'happy-modal-tamil-text';
+                  titleEl.textContent = 'indha ilippu eppavum un moonji la irundhutee irukanum';
+                  
+                  // Force layout reflow before triggering fade-in transition
+                  titleEl.offsetHeight;
+                  titleEl.classList.add('visible');
+                }, 1500);
+              }
+            }, 5000);
+          }, 800);
+        }
+      }, 1000);
     });
   }
 

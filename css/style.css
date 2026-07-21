@@ -3409,16 +3409,72 @@ body {
   opacity: 1;
 }
 
-/* ─── Premium Gift Box Animation ───────────────────────────── */
+/* ─── Premium Gift Box Animation & Countdown Timer ────────────────── */
 .gift-box-container {
   position: relative;
   width: 140px;
   height: 140px;
-  margin: 0.5rem auto 1.5rem auto;
+  margin: 0.5rem auto 1rem auto;
   display: flex;
   align-items: center;
   justify-content: center;
   perspective: 600px;
+}
+
+.gift-timer-ring-wrapper {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  top: 5px;
+  left: 5px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.gift-timer-ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.gift-timer-ring-bg {
+  fill: none;
+  stroke: rgba(201, 168, 76, 0.1);
+  stroke-width: 3;
+}
+
+.gift-timer-ring-progress {
+  fill: none;
+  stroke: url(#goldGradientTimer);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 364.42; /* 2 * PI * 58 */
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.9s linear;
+  filter: drop-shadow(0 0 6px rgba(201, 168, 76, 0.5));
+}
+
+.gift-countdown-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.gift-timer-number {
+  font-family: var(--font-luxury);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  text-shadow: 0 0 12px rgba(201, 168, 76, 0.4);
+}
+
+.gift-timer-status {
+  font-family: var(--font-elegant);
+  font-size: 0.95rem;
+  color: var(--white-muted);
+  font-style: italic;
+  letter-spacing: 0.04em;
 }
 
 .gift-box {
@@ -3593,5 +3649,538 @@ body {
   box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 16px var(--card-accent-glow);
   transform: translateY(-4px) scale(1.02);
   z-index: 5;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VIRTUAL BIRTHDAY CAKE & CANDLE BLOW SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+.cake-screen-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  position: relative;
+  z-index: 10;
+  animation: fadeInUp 1s var(--ease-out-expo) both;
+}
+
+.cake-wrapper {
+  position: relative;
+  width: 240px;
+  height: 200px;
+  margin: 1.5rem auto 2.5rem auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Cake Base Plate */
+.cake-plate {
+  position: absolute;
+  bottom: 0;
+  width: 260px;
+  height: 14px;
+  background: linear-gradient(90deg, #e8d5a3, #ffffff, #c9a84c);
+  border-radius: 50%;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), 0 0 30px rgba(201, 168, 76, 0.2);
+}
+
+/* Tier 1 (Bottom) */
+.cake-tier-bottom {
+  width: 210px;
+  height: 65px;
+  background: linear-gradient(180deg, #2a1b15 0%, #1a0f0b 100%);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 12px 12px 6px 6px;
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.1), 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+.cake-tier-bottom::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: linear-gradient(90deg, #c9a84c, #f5e0a3, #d4af37, #c9a84c);
+  border-radius: 10px 10px 0 0;
+  opacity: 0.9;
+}
+
+/* Tier 2 (Top) */
+.cake-tier-top {
+  width: 150px;
+  height: 55px;
+  background: linear-gradient(180deg, #3d241c 0%, #25130d 100%);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 10px 10px 4px 4px;
+  position: relative;
+  z-index: 3;
+  margin-bottom: -4px;
+  box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.cake-tier-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(90deg, #d4af37, #ffffff, #c9a84c);
+  border-radius: 8px 8px 0 0;
+}
+
+/* Frosting Drips */
+.frosting-drip {
+  position: absolute;
+  top: 8px;
+  width: 14px;
+  height: 12px;
+  background: #f5e0a3;
+  border-radius: 0 0 10px 10px;
+}
+
+/* Candles Row */
+.candles-row {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  position: absolute;
+  top: 40px;
+  z-index: 5;
+  width: 140px;
+}
+
+.candle {
+  position: relative;
+  width: 10px;
+  height: 42px;
+  background: repeating-linear-gradient(
+    45deg,
+    #ffffff,
+    #ffffff 5px,
+    #c9a84c 5px,
+    #c9a84c 10px
+  );
+  border-radius: 3px 3px 1px 1px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.candle-wick {
+  position: absolute;
+  top: -8px;
+  left: 4px;
+  width: 2px;
+  height: 8px;
+  background: #333;
+}
+
+/* Flame & Glow Animation */
+.flame-container {
+  position: absolute;
+  top: -26px;
+  left: -5px;
+  width: 20px;
+  height: 26px;
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.flame {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at 50% 80%, #ffffff 0%, #ffe600 35%, #ff6600 70%, transparent 100%);
+  border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%;
+  animation: flameFlicker 0.15s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 8px rgba(255, 170, 0, 0.9));
+  transform-origin: center bottom;
+}
+
+.flame-glow {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 200, 50, 0.4) 0%, rgba(255, 120, 0, 0.1) 60%, transparent 100%);
+  animation: glowPulse 1.2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes flameFlicker {
+  0% { transform: scale(1) rotate(-2deg); }
+  100% { transform: scale(1.1) rotate(2deg); }
+}
+
+@keyframes glowPulse {
+  0% { opacity: 0.6; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Extinguished Candle & Smoke */
+.flame-container.blown-out {
+  opacity: 0;
+  transform: scale(0.2) translateY(-10px);
+}
+
+.smoke-puff {
+  position: absolute;
+  top: -20px;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  background: rgba(200, 200, 200, 0.7);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.flame-container.blown-out + .smoke-puff {
+  animation: smokeRise 1.8s ease-out forwards;
+}
+
+@keyframes smokeRise {
+  0% { opacity: 0.8; transform: translate(0, 0) scale(1); filter: blur(1px); }
+  50% { opacity: 0.5; transform: translate(-8px, -25px) scale(2.5); filter: blur(3px); }
+  100% { opacity: 0; transform: translate(12px, -50px) scale(4); filter: blur(6px); }
+}
+
+/* Cake Status & Mic Prompt */
+.cake-instructions {
+  text-align: center;
+  max-width: 420px;
+  margin-top: 0.5rem;
+}
+
+.cake-title {
+  font-family: var(--font-luxury);
+  font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+  color: var(--gold-light);
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
+}
+
+.cake-subtitle {
+  font-family: var(--font-editorial);
+  font-size: clamp(1rem, 2.2vw, 1.25rem);
+  color: var(--white-soft);
+  margin-bottom: 1.2rem;
+}
+
+.mic-meter-container {
+  width: 240px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--gold-dim);
+  border-radius: 20px;
+  margin: 0.8rem auto 1.2rem auto;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.mic-meter-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #c9a84c, #ffeb3b, #ff5722);
+  border-radius: 20px;
+  transition: width 0.08s linear;
+}
+
+.mic-instruction-badge {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: var(--gold-light);
+  font-family: var(--font-body);
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
+  font-weight: 500;
+  padding: 0.75rem 1.6rem;
+  border-radius: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.mic-icon-pulse {
+  display: inline-block;
+  font-size: 1.2rem;
+  animation: micIconPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes micIconPulse {
+  0% { transform: scale(1); filter: drop-shadow(0 0 2px var(--gold)); }
+  100% { transform: scale(1.25); filter: drop-shadow(0 0 10px var(--gold-bright)); }
+}
+
+.emergency-blow-btn {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  color: var(--white-muted);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: 1rem;
+  opacity: 0.45;
+  transition: all 0.25s ease;
+}
+.emergency-blow-btn:hover {
+  opacity: 0.9;
+  border-color: var(--gold-dim);
+  color: var(--gold-light);
+  background: rgba(201, 168, 76, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VINTAGE GRAMOPHONE RECORD PLAYER
+   ═══════════════════════════════════════════════════════════════ */
+.gramophone-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.025);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: var(--card-shadow-rest);
+  transition: transform 0.4s var(--ease-out-expo), border-color 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
+  overflow: hidden;
+}
+
+.gramophone-card:hover, .gramophone-card.hovered, .gramophone-card.playing {
+  border-color: var(--accent, var(--gold));
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 30px var(--accent, var(--gold-glow));
+  transform: translateY(-6px);
+}
+
+.gramophone-accent-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 12px 0 0 12px;
+}
+
+/* Stage & Record Animation Area */
+.gramophone-stage {
+  position: relative;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Album Cover */
+.gramophone-cover {
+  position: absolute;
+  left: 10px;
+  width: 120px;
+  height: 120px;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 4;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+  transition: transform 0.4s var(--ease-out-expo);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.gramophone-card:hover .gramophone-cover,
+.gramophone-card.playing .gramophone-cover {
+  transform: translateX(-10px) rotate(-3deg);
+}
+
+.gramophone-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gramophone-cover-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  color: var(--gold-light);
+  font-family: var(--font-luxury-clean);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-align: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+}
+
+/* Vintage Spinning Vinyl Record */
+.gramophone-vinyl {
+  position: absolute;
+  left: 45px;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #111 0%, #050505 60%, #1a1a1a 80%, #080808 100%);
+  z-index: 2;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.05);
+  transition: transform 0.6s var(--ease-out-expo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Slide out vinyl on hover / play */
+.gramophone-card:hover .gramophone-vinyl,
+.gramophone-card.playing .gramophone-vinyl {
+  transform: translateX(45px) rotate(0deg);
+}
+
+/* Continuous spinning when playing */
+.gramophone-card.playing .gramophone-vinyl {
+  animation: spinVinyl 3.5s linear infinite;
+}
+
+@keyframes spinVinyl {
+  from { transform: translateX(45px) rotate(0deg); }
+  to { transform: translateX(45px) rotate(360deg); }
+}
+
+.vinyl-groove-lines {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 1px repeating-radial-gradient(circle, rgba(255,255,255,0.05) 0, rgba(255,255,255,0.05) 2px, transparent 3px, transparent 6px);
+  pointer-events: none;
+}
+
+.vinyl-reflection {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 40%, rgba(255,255,255,0.08) 60%, transparent 100%);
+  pointer-events: none;
+}
+
+.vinyl-center-label {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid var(--gold);
+  position: relative;
+  box-shadow: 0 0 8px rgba(0,0,0,0.8);
+}
+
+.vinyl-spindle-hole {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #000;
+  border: 1px solid var(--gold-light);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Metallic Tonearm Assembly */
+.gramophone-arm-assembly {
+  position: absolute;
+  top: 8px;
+  right: 15px;
+  width: 60px;
+  height: 90px;
+  z-index: 5;
+  pointer-events: none;
+  transform-origin: top right;
+  transition: transform 0.6s var(--ease-out-expo);
+  transform: rotate(-15deg);
+}
+
+.gramophone-card.playing .gramophone-arm-assembly {
+  transform: rotate(18deg);
+}
+
+.gramophone-arm-base {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #e8d5a3, #8a7535);
+  border: 1px solid var(--gold);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+
+.gramophone-arm-rod {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 3px;
+  height: 65px;
+  background: linear-gradient(to bottom, #d4af37, #8a7535, #e8d5a3);
+  border-radius: 2px;
+  transform: rotate(-12deg);
+  transform-origin: top center;
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+}
+
+.gramophone-arm-head {
+  position: absolute;
+  bottom: 15px;
+  left: -8px;
+  width: 12px;
+  height: 16px;
+  background: linear-gradient(135deg, #d4af37, #555);
+  border-radius: 2px;
+  border: 1px solid var(--gold-light);
+}
+
+/* Song Info & Controls */
+.gramophone-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.gramophone-song-title {
+  font-family: var(--font-editorial);
+  font-size: 1.25rem;
+  color: var(--white);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.gramophone-artist {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--gold-light);
+  font-weight: 400;
+}
+
+.gramophone-film {
+  font-family: var(--font-elegant);
+  font-size: 0.85rem;
+  color: var(--white-muted);
+  font-style: italic;
 }
 

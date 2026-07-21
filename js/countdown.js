@@ -265,22 +265,41 @@ const CountdownTimer = (() => {
       }
     }
 
-    // Bind entering the capsule
+    // Bind entering the capsule via Virtual Birthday Cake screen
     if (elements.enterBtn) {
       elements.enterBtn.addEventListener('click', () => {
-        // Stop celebration confetti
-        if (typeof Animations !== 'undefined' && Animations.Celebration) {
-          Animations.Celebration.stop();
+        if (typeof SFX !== 'undefined' && typeof SFX.whoosh === 'function') {
+          SFX.whoosh();
         }
-        // Destroy 3D engine
-        if (typeof Abstract3D !== 'undefined') {
-          Abstract3D.destroy();
+
+        // Render Virtual Cake Screen inside reveal container
+        if (typeof CakeBlowSystem !== 'undefined' && elements.reveal) {
+          CakeBlowSystem.renderCakeScreen(elements.reveal, () => {
+            // Callback when candles are blown out
+            if (typeof Animations !== 'undefined' && Animations.Celebration) {
+              Animations.Celebration.stop();
+            }
+            if (typeof Abstract3D !== 'undefined') {
+              Abstract3D.destroy();
+            }
+            if (typeof window.playMusic === 'function') {
+              window.playMusic();
+            }
+            hideCountdown();
+          });
+        } else {
+          // Fallback if CakeBlowSystem is unavailable
+          if (typeof Animations !== 'undefined' && Animations.Celebration) {
+            Animations.Celebration.stop();
+          }
+          if (typeof Abstract3D !== 'undefined') {
+            Abstract3D.destroy();
+          }
+          if (typeof window.playMusic === 'function') {
+            window.playMusic();
+          }
+          hideCountdown();
         }
-        // Start background music
-        if (typeof window.playMusic === 'function') {
-          window.playMusic();
-        }
-        hideCountdown();
       }, { once: true });
     } else {
       setTimeout(hideCountdown, 4000);
