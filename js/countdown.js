@@ -49,8 +49,16 @@ const CountdownTimer = (() => {
       GoldCursor.init();
     }
 
+    // Pre-request microphone permission on countdown page load & user gesture
+    const requestMicPermissionEarly = () => {
+      if (typeof CakeBlowSystem !== 'undefined' && typeof CakeBlowSystem.requestMicPermission === 'function') {
+        CakeBlowSystem.requestMicPermission();
+      }
+    };
+
     // Unlock SFX (either on page load or on user interaction)
     const tryUnlockSFX = () => {
+      requestMicPermissionEarly();
       if (sfxUnlocked || typeof SFX === 'undefined') return;
 
       SFX.unlock();
@@ -72,19 +80,18 @@ const CountdownTimer = (() => {
       document.removeEventListener('keydown', tryUnlockSFX, true);
     };
 
-    // 1. Try to unlock immediately on load (succeeds if browser allows autoplay)
+    // 1. Try to unlock audio & mic immediately on page load
+    requestMicPermissionEarly();
     tryUnlockSFX();
 
-    // 2. Set up fallback interaction listeners in case browser blocks autoplay
-    if (!sfxUnlocked) {
-      document.addEventListener('click', tryUnlockSFX, true);
-      document.addEventListener('touchstart', tryUnlockSFX, { capture: true, passive: true });
-      document.addEventListener('keydown', tryUnlockSFX, true);
-    }
+    // 2. Set up fallback interaction listeners in case browser requires user gesture
+    document.addEventListener('click', tryUnlockSFX, true);
+    document.addEventListener('touchstart', tryUnlockSFX, { capture: true, passive: true });
+    document.addEventListener('keydown', tryUnlockSFX, true);
 
     // Stop click propagation on overlay (preserve existing behavior)
     elements.overlay.addEventListener('click', (e) => {
-      tryUnlockSFX(); // Ensure audio context unlocks on click anywhere on overlay
+      tryUnlockSFX(); // Ensure audio context & mic unlock on click anywhere on overlay
       if (e.target.closest('#enter-capsule-btn')) {
         return;
       }

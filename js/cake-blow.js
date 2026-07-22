@@ -17,10 +17,10 @@ const CakeBlowSystem = (() => {
 
     containerElement.innerHTML = `
       <div class="cake-screen-container">
-        <h1 class="cake-title">Make a Wish, Akshayaaaa! 🎂</h1>
-        <p class="cake-subtitle" id="cake-prompt-text">Blow into your microphone to blow out the candles! 🌬️✨</p>
+        <h1 class="cake-title">Make a Wish, Achuuu! 🎂</h1>
+        <p class="cake-subtitle" id="cake-prompt-text">Come near to the screen and blow the candles! 🌬️✨</p>
 
-        <div class="cake-wrapper">
+        <div class="cake-wrapper" id="interactive-cake" style="cursor: pointer;" title="Click or tap to blow out candles">
           <div class="candles-row">
             <div class="candle">
               <div class="candle-wick"></div>
@@ -56,20 +56,12 @@ const CakeBlowSystem = (() => {
         <div class="mic-meter-container">
           <div id="mic-meter-fill" class="mic-meter-fill"></div>
         </div>
-
-        <div id="mic-instruction-badge" class="mic-instruction-badge">
-          <span class="mic-icon-pulse">🎙️</span> Blow into your mic to blow out the candles! 💨
-        </div>
-
-        <button id="emergency-blow-btn" class="emergency-blow-btn" title="Emergency blow if mic fails">
-          💨 (Emergency Blow)
-        </button>
       </div>
     `;
 
-    const emergencyBtn = containerElement.querySelector('#emergency-blow-btn');
-    if (emergencyBtn) {
-      emergencyBtn.addEventListener('click', () => {
+    const cakeWrapper = containerElement.querySelector('#interactive-cake');
+    if (cakeWrapper) {
+      cakeWrapper.addEventListener('click', () => {
         triggerCandleExtinguish();
       });
     }
@@ -78,27 +70,51 @@ const CakeBlowSystem = (() => {
     initMicListener();
   }
 
-  async function initMicListener() {
+  async function requestMicPermission() {
+    if (audioStream) return audioStream;
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.warn('Mic API not supported on this browser.');
-        return;
+        return null;
       }
-
       audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC && !audioCtx) {
+        audioCtx = new AC();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+      return audioStream;
+    } catch (err) {
+      console.warn('Mic permission not granted yet:', err);
+      return null;
+    }
+  }
+
+  async function initMicListener() {
+    try {
+      if (!audioStream) {
+        await requestMicPermission();
+      }
+      if (!audioStream) return;
+
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
 
-      audioCtx = new AC();
+      if (!audioCtx) {
+        audioCtx = new AC();
+      }
       if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
       }
 
-      const source = audioCtx.createMediaStreamSource(audioStream);
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.3;
-      source.connect(analyser);
+      if (!analyser) {
+        const source = audioCtx.createMediaStreamSource(audioStream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.3;
+        source.connect(analyser);
+      }
 
       const bufferLength = analyser.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
@@ -157,10 +173,6 @@ const CakeBlowSystem = (() => {
       checkAudio();
     } catch (err) {
       console.warn('Mic access not granted:', err);
-      const promptText = document.getElementById('cake-prompt-text');
-      if (promptText) {
-        promptText.textContent = 'Please allow microphone access to blow out your candles! 🎙️✨';
-      }
     }
   }
 
@@ -187,7 +199,7 @@ const CakeBlowSystem = (() => {
     // Update prompt title text
     const promptText = document.getElementById('cake-prompt-text');
     if (promptText) {
-      promptText.textContent = '🎉 Your wish is on its way! Happy Birthday Akshayaaaa! ❤️';
+      promptText.textContent = '🎉 Your wish is on its way! Happy Birthday Achuuu! ❤️';
     }
 
     // Trigger full celebration gold confetti blast
@@ -224,5 +236,6 @@ const CakeBlowSystem = (() => {
     renderCakeScreen,
     triggerCandleExtinguish,
     stopMic,
+    requestMicPermission,
   };
 })();
