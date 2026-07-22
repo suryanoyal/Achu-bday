@@ -617,12 +617,374 @@ const Animations = (() => {
     return { init, start, burst, stop };
   })();
 
+  /* ─── MATCHSTICK STRIKE ANIMATION ───────────────────────── */
+  const MatchstickStrike = (() => {
+    let animId;
+
+    function play(onIgnite, onComplete) {
+      let container = document.getElementById('matchstick-overlay');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'matchstick-overlay';
+        container.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: 10000;
+          pointer-events: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(4px);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        `;
+        document.body.appendChild(container);
+        requestAnimationFrame(() => {
+          container.style.opacity = '1';
+        });
+      }
+
+      container.innerHTML = `
+        <canvas id="matchstick-canvas" width="${window.innerWidth}" height="${window.innerHeight}" style="width:100%;height:100%;display:block;"></canvas>
+      `;
+
+      const canvas = document.getElementById('matchstick-canvas');
+      const ctx = canvas.getContext('2d');
+
+      const W = canvas.width;
+      const H = canvas.height;
+
+      const strikeStartX = W * 0.28;
+      const strikeStartY = H * 0.58;
+      const strikeEndX = W * 0.62;
+      const strikeEndY = H * 0.44;
+
+      let startTime = null;
+      const duration = 3600; // total animation ms for slow, realistic motion
+      let ignited = false;
+      let lit1 = false;
+      let lit2 = false;
+      let lit3 = false;
+      let extinguished = false;
+      let sparks = [];
+      let smokePuffs = [];
+
+      function createSparks(x, y, count = 35) {
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.random() - 0.5) * Math.PI * 0.95 - Math.PI * 0.25;
+          const speed = Math.random() * 12 + 3;
+          sparks.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: Math.random() * 3.5 + 2,
+            color: Math.random() > 0.3 ? '#ffb300' : (Math.random() > 0.5 ? '#ff3d00' : '#ffffff'),
+            alpha: 1,
+            decay: Math.random() * 0.035 + 0.015,
+            gravity: 0.22
+          });
+        }
+      }
+
+      function createSmokePuffs(x, y) {
+        for (let i = 0; i < 24; i++) {
+          smokePuffs.push({
+            x: x + (Math.random() - 0.5) * 14,
+            y: y + (Math.random() - 0.5) * 14,
+            vx: (Math.random() - 0.5) * 4,
+            vy: -Math.random() * 3 - 1.5,
+            size: Math.random() * 9 + 5,
+            alpha: 0.85,
+            decay: Math.random() * 0.02 + 0.012
+          });
+        }
+      }
+
+      function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        ctx.clearRect(0, 0, W, H);
+
+        // Retrieve candle positions dynamically
+        const f1 = document.getElementById('flame-1');
+        const f2 = document.getElementById('flame-2');
+        const f3 = document.getElementById('flame-3');
+
+        const c1Pos = f1 ? { x: f1.getBoundingClientRect().left + 10, y: f1.getBoundingClientRect().top + 10 } : { x: W * 0.44, y: H * 0.48 };
+        const c2Pos = f2 ? { x: f2.getBoundingClientRect().left + 10, y: f2.getBoundingClientRect().top + 10 } : { x: W * 0.50, y: H * 0.46 };
+        const c3Pos = f3 ? { x: f3.getBoundingClientRect().left + 10, y: f3.getBoundingClientRect().top + 10 } : { x: W * 0.56, y: H * 0.48 };
+
+        // Matchbox strip position (visible during strike phase)
+        const boxX = W * 0.38;
+        const boxY = H * 0.52;
+        const boxW = Math.min(260, W * 0.28);
+        const boxH = 32;
+
+        if (progress < 0.24) {
+          // Draw Matchbox friction strip
+          ctx.save();
+          ctx.translate(boxX + boxW / 2, boxY + boxH / 2);
+          ctx.rotate(-0.2);
+          ctx.fillStyle = '#2c1810';
+          ctx.strokeStyle = '#c9a84c';
+          ctx.lineWidth = 2;
+          ctx.shadowColor = 'rgba(0,0,0,0.6)';
+          ctx.shadowBlur = 15;
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(-boxW / 2, -boxH / 2, boxW, boxH, 8);
+          } else {
+            ctx.rect(-boxW / 2, -boxH / 2, boxW, boxH);
+          }
+          ctx.fill();
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          // Phosphorus friction dots
+          ctx.fillStyle = '#170c08';
+          for (let bx = -boxW / 2 + 12; bx < boxW / 2 - 12; bx += 9) {
+            for (let by = -boxH / 2 + 6; by < boxH / 2 - 6; by += 8) {
+              ctx.beginPath();
+              ctx.arc(bx + (by % 2), by, 1.8, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          ctx.restore();
+        }
+
+        // Current matchstick tip position
+        let matchX, matchY;
+        let matchAngle = -0.32;
+
+        if (progress < 0.16) {
+          // Phase 1: Striking stroke across box
+          const strokeP = progress / 0.16;
+          const easeStroke = strokeP * strokeP;
+          matchX = strikeStartX + (strikeEndX - strikeStartX) * easeStroke;
+          matchY = strikeStartY + (strikeEndY - strikeStartY) * easeStroke;
+          matchAngle = -0.32;
+        } else if (progress < 0.32) {
+          // Phase 2: Move lit matchstick to Candle 1
+          const p = (progress - 0.16) / 0.16;
+          const easeP = 0.5 - 0.5 * Math.cos(p * Math.PI);
+          matchX = strikeEndX + (c1Pos.x - strikeEndX) * easeP;
+          matchY = strikeEndY + (c1Pos.y - strikeEndY) * easeP;
+          matchAngle = -0.22;
+        } else if (progress < 0.48) {
+          // Phase 3: Move from Candle 1 to Candle 2
+          const p = (progress - 0.32) / 0.16;
+          const easeP = 0.5 - 0.5 * Math.cos(p * Math.PI);
+          matchX = c1Pos.x + (c2Pos.x - c1Pos.x) * easeP;
+          matchY = c1Pos.y + (c2Pos.y - c1Pos.y) * easeP;
+          matchAngle = -0.16;
+        } else if (progress < 0.64) {
+          // Phase 4: Move from Candle 2 to Candle 3
+          const p = (progress - 0.48) / 0.16;
+          const easeP = 0.5 - 0.5 * Math.cos(p * Math.PI);
+          matchX = c2Pos.x + (c3Pos.x - c2Pos.x) * easeP;
+          matchY = c2Pos.y + (c3Pos.y - c2Pos.y) * easeP;
+          matchAngle = -0.10;
+        } else if (progress < 0.84) {
+          // Phase 5: SLOW, DELIBERATE HAND SHAKE / FLICK to extinguish flame!
+          const p = (progress - 0.64) / 0.20;
+          const shakeOffset = Math.sin(p * Math.PI * 3) * 28;
+          const shakeRot = Math.sin(p * Math.PI * 3) * 0.55;
+          matchX = c3Pos.x + 20 + shakeOffset;
+          matchY = c3Pos.y - 15 + Math.sin(p * Math.PI * 6) * 6;
+          matchAngle = -0.10 + shakeRot;
+        } else {
+          // Phase 6: Drop & tumble down off screen with gravity
+          const p = (progress - 0.84) / 0.16;
+          const gravityDrop = p * p * (H * 0.65);
+          matchX = c3Pos.x + 20 + p * 55;
+          matchY = c3Pos.y - 15 + gravityDrop;
+          matchAngle = -0.10 + p * 2.8;
+        }
+
+        // Trigger match tip ignition sound & sparks at strike point (~15% progress)
+        if (progress >= 0.15 && !ignited) {
+          ignited = true;
+          createSparks(strikeEndX, strikeEndY, 50);
+          if (typeof onIgnite === 'function') onIgnite();
+        }
+
+        // Trigger Candle 1 Ignition at tip contact
+        if (progress >= 0.31 && !lit1) {
+          lit1 = true;
+          if (typeof CakeBlowSystem !== 'undefined' && typeof CakeBlowSystem.lightCandle === 'function') {
+            CakeBlowSystem.lightCandle(1);
+          }
+          createSparks(c1Pos.x, c1Pos.y, 25);
+          if (typeof SFX !== 'undefined' && typeof SFX.digitBlip === 'function') SFX.digitBlip();
+        }
+
+        // Trigger Candle 2 Ignition at tip contact
+        if (progress >= 0.47 && !lit2) {
+          lit2 = true;
+          if (typeof CakeBlowSystem !== 'undefined' && typeof CakeBlowSystem.lightCandle === 'function') {
+            CakeBlowSystem.lightCandle(2);
+          }
+          createSparks(c2Pos.x, c2Pos.y, 25);
+          if (typeof SFX !== 'undefined' && typeof SFX.digitBlip === 'function') SFX.digitBlip();
+        }
+
+        // Trigger Candle 3 Ignition at tip contact
+        if (progress >= 0.63 && !lit3) {
+          lit3 = true;
+          if (typeof CakeBlowSystem !== 'undefined' && typeof CakeBlowSystem.lightCandle === 'function') {
+            CakeBlowSystem.lightCandle(3);
+          }
+          createSparks(c3Pos.x, c3Pos.y, 25);
+          if (typeof SFX !== 'undefined' && typeof SFX.digitBlip === 'function') SFX.digitBlip();
+        }
+
+        // Trigger Shake Extinguish (Puff of smoke + sound during slow wave)
+        if (progress >= 0.70 && !extinguished) {
+          extinguished = true;
+          createSmokePuffs(matchX, matchY);
+          if (typeof SFX !== 'undefined' && typeof SFX.digitBlip === 'function') SFX.digitBlip();
+        }
+
+        // Draw Sparks
+        sparks.forEach(s => {
+          s.x += s.vx;
+          s.y += s.vy;
+          s.vy += s.gravity;
+          s.vx *= 0.96;
+          s.alpha -= s.decay;
+
+          if (s.alpha > 0) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, s.alpha);
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+            ctx.fillStyle = s.color;
+            ctx.shadowColor = s.color;
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.restore();
+          }
+        });
+
+        // Draw Smoke Puffs (from Extinguishing Shake)
+        smokePuffs.forEach(sm => {
+          sm.x += sm.vx;
+          sm.y += sm.vy;
+          sm.size += 0.4;
+          sm.alpha -= sm.decay;
+
+          if (sm.alpha > 0) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, sm.alpha);
+            ctx.beginPath();
+            ctx.arc(sm.x, sm.y, sm.size, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(180, 180, 180, 0.7)';
+            ctx.shadowColor = 'rgba(100, 100, 100, 0.5)';
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.restore();
+          }
+        });
+
+        // Draw Wooden Matchstick
+        ctx.save();
+        ctx.translate(matchX, matchY);
+        ctx.rotate(matchAngle);
+
+        const stickLength = 170;
+        const stickWidth = 11;
+
+        // Stick body (wood gradient)
+        const woodGrad = ctx.createLinearGradient(0, 0, stickLength, 0);
+        woodGrad.addColorStop(0, extinguished ? '#d4b483' : '#f5d8a6');
+        woodGrad.addColorStop(1, extinguished ? '#4a3828' : '#be945b');
+        ctx.fillStyle = woodGrad;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(0, -stickWidth / 2, stickLength, stickWidth, 3);
+        } else {
+          ctx.rect(0, -stickWidth / 2, stickLength, stickWidth);
+        }
+        ctx.fill();
+
+        // Match head (Charred black tip after extinguish, or glowing red while lit)
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 11, 9, 0, 0, Math.PI * 2);
+        ctx.fillStyle = extinguished ? '#1e1610' : (ignited ? '#ff3d00' : '#8b0000');
+        ctx.fill();
+
+        // Ignited Flame on Match Head (extinguishes during shake at progress 0.73)
+        if (ignited && !extinguished) {
+          const flameScale = Math.min(1.2, (progress - 0.19) / 0.15);
+          const flicker = Math.sin(timestamp * 0.04) * 4;
+
+          ctx.save();
+          ctx.scale(flameScale, flameScale);
+
+          // Outer flame glow
+          ctx.beginPath();
+          ctx.ellipse(-10 + flicker, -22, 24, 36, 0, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 140, 0, 0.45)';
+          ctx.shadowColor = '#ff6d00';
+          ctx.shadowBlur = 30;
+          ctx.fill();
+
+          // Main flame body
+          ctx.beginPath();
+          ctx.ellipse(-8 + flicker * 0.5, -18, 16, 26, 0, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff9100';
+          ctx.fill();
+
+          // Flame core (bright yellow/white)
+          ctx.beginPath();
+          ctx.ellipse(-5, -13, 8, 15, 0, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffff00';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.ellipse(-3, -9, 4, 9, 0, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+
+          ctx.restore();
+        }
+
+        ctx.restore();
+
+        if (progress < 1) {
+          animId = requestAnimationFrame(animate);
+        } else {
+          container.style.transition = 'opacity 0.4s ease';
+          container.style.opacity = '0';
+          setTimeout(() => {
+            if (container && container.parentNode) {
+              container.parentNode.removeChild(container);
+            }
+            if (typeof onComplete === 'function') onComplete();
+          }, 400);
+        }
+      }
+
+      animId = requestAnimationFrame(animate);
+    }
+
+    return { play };
+  })();
+
   /* ─── PUBLIC API ─────────────────────────────────────────── */
   return {
     ParticleSystem,
     StarField,
     FinaleParticles,
     Celebration,
+    MatchstickStrike,
     animateCounter,
     initScrollReveal,
     initFinaleObserver,

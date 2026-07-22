@@ -275,39 +275,46 @@ const CountdownTimer = (() => {
     // Bind entering the capsule via Virtual Birthday Cake screen
     if (elements.enterBtn) {
       elements.enterBtn.addEventListener('click', () => {
-        if (typeof SFX !== 'undefined' && typeof SFX.whoosh === 'function') {
-          SFX.whoosh();
-        }
+        const proceedToCake = () => {
+          if (typeof CakeBlowSystem !== 'undefined' && elements.reveal) {
+            CakeBlowSystem.renderCakeScreen(elements.reveal, () => {
+              // Callback when candles are blown out
+              if (typeof Animations !== 'undefined' && Animations.Celebration) {
+                Animations.Celebration.stop();
+              }
+              if (typeof Abstract3D !== 'undefined') {
+                Abstract3D.destroy();
+              }
+              if (typeof window.playMusic === 'function') {
+                window.playMusic();
+              }
+              hideCountdown();
+            });
+          }
+        };
 
-        // Render Virtual Cake Screen inside reveal container
-        if (typeof CakeBlowSystem !== 'undefined' && elements.reveal) {
-          CakeBlowSystem.renderCakeScreen(elements.reveal, () => {
-            // Callback when candles are blown out
-            if (typeof Animations !== 'undefined' && Animations.Celebration) {
-              Animations.Celebration.stop();
+        if (typeof Animations !== 'undefined' && Animations.MatchstickStrike) {
+          Animations.MatchstickStrike.play(
+            () => {
+              if (typeof SFX !== 'undefined' && typeof SFX.matchbox === 'function') {
+                SFX.matchbox();
+              }
+              proceedToCake();
+            },
+            () => {
+              // Ensure all candles are lit if any were missed
+              if (typeof CakeBlowSystem !== 'undefined' && typeof CakeBlowSystem.lightAllCandles === 'function') {
+                CakeBlowSystem.lightAllCandles();
+              }
             }
-            if (typeof Abstract3D !== 'undefined') {
-              Abstract3D.destroy();
-            }
-            if (typeof window.playMusic === 'function') {
-              window.playMusic();
-            }
-            hideCountdown();
-          });
+          );
         } else {
-          // Fallback if CakeBlowSystem is unavailable
-          if (typeof Animations !== 'undefined' && Animations.Celebration) {
-            Animations.Celebration.stop();
+          if (typeof SFX !== 'undefined' && typeof SFX.matchbox === 'function') {
+            SFX.matchbox();
           }
-          if (typeof Abstract3D !== 'undefined') {
-            Abstract3D.destroy();
-          }
-          if (typeof window.playMusic === 'function') {
-            window.playMusic();
-          }
-          hideCountdown();
+          proceedToCake();
         }
-      }, { once: true });
+      });
     } else {
       setTimeout(hideCountdown, 4000);
     }

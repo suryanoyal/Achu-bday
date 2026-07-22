@@ -442,6 +442,7 @@
   }
 
   /* ─── INTERACTIVE SKY TIMELINE (iPhone Weather Style – 24hr) ── */
+  /* ─── INTERACTIVE SKY TIMELINE (iPhone Weather Style – 24hr) ── */
   function initInteractiveSky() {
     const slider = document.getElementById('sky-time-slider');
     const timeText = document.getElementById('sky-current-time');
@@ -452,14 +453,17 @@
     const arcCanvas = document.getElementById('sky-arc-canvas');
     const arcContainer = document.getElementById('sky-arc-container');
     const hourLabelsContainer = document.getElementById('sky-hour-labels');
+    const birthJumpBtn = document.getElementById('sky-birth-jump-btn');
+    const birthCard = document.getElementById('sky-birth-card');
 
     if (!slider || !timeText || !statusText || !celestialBody || !sectionSky || !arcCanvas || !arcContainer) return;
 
     const ctx = arcCanvas.getContext('2d');
 
-    // Sunrise / Sunset in minutes
-    const SUNRISE = 358;  // 5:58 AM
-    const SUNSET = 1118;  // 6:38 PM
+    // Key Astronomical Timings
+    const SUNRISE = 358;     // 5:58 AM IST
+    const SUNSET = 1118;     // 6:38 PM IST
+    const BIRTH_TIME = 980;  // 4:20 PM IST
 
     const sunSvg = `
       <svg viewBox="0 0 24 24" width="100%" height="100%">
@@ -483,8 +487,22 @@
       </svg>
     `;
 
+    const heartSvg = `
+      <svg viewBox="0 0 24 24" width="100%" height="100%">
+        <defs>
+          <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffd700"/>
+            <stop offset="50%" stop-color="#ff4081"/>
+            <stop offset="100%" stop-color="#ff1744"/>
+          </linearGradient>
+        </defs>
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="url(#heartGrad)"/>
+      </svg>
+    `;
+
     // Generate hour labels
     if (hourLabelsContainer) {
+      hourLabelsContainer.innerHTML = '';
       const labelHours = [0, 3, 6, 9, 12, 15, 18, 21];
       labelHours.forEach(h => {
         const span = document.createElement('span');
@@ -502,6 +520,7 @@
       { time: 358,  c1: [255, 110, 90],  c2: [254, 180, 120] },
       { time: 420,  c1: [110, 150, 220], c2: [190, 210, 245] },
       { time: 720,  c1: [50, 120, 210],  c2: [130, 180, 245] },
+      { time: 980,  c1: [255, 175, 80],  c2: [120, 160, 235] }, // 4:20 PM Golden Hour Peak
       { time: 1050, c1: [70, 110, 190],  c2: [220, 160, 110] },
       { time: 1118, c1: [45, 20, 80],    c2: [220, 70, 70] },
       { time: 1170, c1: [15, 10, 45],    c2: [50, 20, 75] },
@@ -514,9 +533,7 @@
       return pad + (minutes / 1440) * (w - 2 * pad);
     }
 
-    /** Get the Y position on the arc for a given time.
-     *  Sun is above horizon between sunrise and sunset (arc peaks at midday).
-     *  Below horizon otherwise (inverted arc). */
+    /** Get the Y position on the arc for a given time. */
     function timeToY(minutes, w, h, pad) {
       const horizonY = h * 0.65;
       const arcHeight = h * 0.55;
@@ -648,11 +665,40 @@
       ctx.lineWidth = 1;
       ctx.stroke();
 
+      // ── Special Birth Moment (4:20 PM) Marker on Arc ──
+      const birthX = timeToX(BIRTH_TIME, w, pad);
+      const birthY = timeToY(BIRTH_TIME, w, h, pad);
+
+      // Vertical guide line for 4:20 PM
+      ctx.beginPath();
+      ctx.setLineDash([2, 3]);
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.moveTo(birthX, birthY);
+      ctx.lineTo(birthX, horizonY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Birth moment pulse halo
+      ctx.beginPath();
+      ctx.arc(birthX, birthY, 11, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.22)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.9)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Birth moment center star dot
+      ctx.beginPath();
+      ctx.arc(birthX, birthY, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffe066';
+      ctx.fill();
+
       // ── Current time indicator line ──
       const curX = timeToX(currentMinutes, w, pad);
       ctx.beginPath();
       ctx.setLineDash([3, 3]);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
       ctx.lineWidth = 1;
       ctx.moveTo(curX, 0);
       ctx.lineTo(curX, h);
@@ -671,17 +717,29 @@
       timeText.textContent = `${displayHrs}:${displayMins} ${ampm}`;
 
       const isDay = minutes >= SUNRISE && minutes < SUNSET;
+      const isBirthMoment = Math.abs(minutes - BIRTH_TIME) <= 6;
 
-      if (isDay) {
-        celestialBody.innerHTML = sunSvg;
-        celestialBody.className = "sky-celestial-body sun";
-        statusText.textContent = minutes < 720 ? "Morning" : (minutes === 720 ? "Midday" : "Afternoon");
+      if (isBirthMoment) {
+        celestialBody.innerHTML = heartSvg;
+        celestialBody.className = "sky-celestial-body heart birth-moment-glow";
+        statusText.innerHTML = "✨ 4:20 PM — THE GOLDEN MOMENT YOU ARRIVED! ✨";
+        statusText.classList.add('highlight-birth');
+        if (birthCard) birthCard.classList.add('active-birth');
       } else {
-        celestialBody.innerHTML = moonSvg;
-        celestialBody.className = "sky-celestial-body moon";
-        if (minutes >= SUNSET && minutes < 1200) statusText.textContent = "Evening / Dusk";
-        else if (minutes >= 1200 || minutes < 180) statusText.textContent = "Late Night";
-        else statusText.textContent = "Pre-Dawn";
+        statusText.classList.remove('highlight-birth');
+        if (birthCard) birthCard.classList.remove('active-birth');
+
+        if (isDay) {
+          celestialBody.innerHTML = sunSvg;
+          celestialBody.className = "sky-celestial-body sun";
+          statusText.textContent = minutes < 720 ? "Morning" : (minutes === 720 ? "Midday" : "Afternoon");
+        } else {
+          celestialBody.innerHTML = moonSvg;
+          celestialBody.className = "sky-celestial-body moon";
+          if (minutes >= SUNSET && minutes < 1200) statusText.textContent = "Evening / Dusk";
+          else if (minutes >= 1200 || minutes < 180) statusText.textContent = "Late Night";
+          else statusText.textContent = "Pre-Dawn";
+        }
       }
 
       // Resize and draw arc
@@ -735,9 +793,150 @@
       }
     }
 
+    // ── FIREWORKS SPARK BURST HELPER ──
+    function triggerSkyFireworks() {
+      let fwCanvas = document.getElementById('sky-fireworks-canvas');
+      if (!fwCanvas) {
+        fwCanvas = document.createElement('canvas');
+        fwCanvas.id = 'sky-fireworks-canvas';
+        fwCanvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;';
+        document.body.appendChild(fwCanvas);
+      }
+
+      const fctx = fwCanvas.getContext('2d');
+      fwCanvas.width = window.innerWidth;
+      fwCanvas.height = window.innerHeight;
+
+      let particles = [];
+      const colors = ['#ffd700', '#ff5722', '#ffeb3b', '#00e5ff', '#e91e63', '#76ff03', '#ffffff'];
+
+      const burstCenters = [
+        { x: window.innerWidth * 0.25, y: window.innerHeight * 0.35 },
+        { x: window.innerWidth * 0.50, y: window.innerHeight * 0.25 },
+        { x: window.innerWidth * 0.75, y: window.innerHeight * 0.35 },
+      ];
+
+      burstCenters.forEach(center => {
+        for (let i = 0; i < 55; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 9 + 2;
+          particles.push({
+            x: center.x,
+            y: center.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: Math.random() * 3.5 + 2,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            alpha: 1,
+            decay: Math.random() * 0.02 + 0.012,
+            gravity: 0.12
+          });
+        }
+      });
+
+      function animateFireworks() {
+        fctx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+        let alive = false;
+
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += p.gravity;
+          p.vx *= 0.98;
+          p.vy *= 0.98;
+          p.alpha -= p.decay;
+
+          if (p.alpha > 0) {
+            alive = true;
+            fctx.save();
+            fctx.globalAlpha = Math.max(0, p.alpha);
+            fctx.beginPath();
+            fctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            fctx.fillStyle = p.color;
+            fctx.shadowColor = p.color;
+            fctx.shadowBlur = 12;
+            fctx.fill();
+            fctx.restore();
+          }
+        });
+
+        if (alive) {
+          requestAnimationFrame(animateFireworks);
+        } else {
+          fctx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+        }
+      }
+
+      animateFireworks();
+    }
+
+    // ── MAGNETIC SNAP & CELEBRATION LOCK ──
+    let isMagnetLocked = false;
+    const SNAP_THRESHOLD = 25; // Snap window: 955 to 1005 minutes (around 4:20 PM)
+
+    function triggerBirthCelebration() {
+      // 1. Play chime SFX
+      if (typeof SFX !== 'undefined' && typeof SFX.chime === 'function') {
+        SFX.chime(2);
+      }
+      // 2. Trigger full gold confetti burst
+      if (typeof Animations !== 'undefined' && Animations.Celebration) {
+        Animations.Celebration.burst();
+      }
+      // 3. Trigger fireworks
+      triggerSkyFireworks();
+    }
+
     slider.addEventListener('input', (e) => {
-      updateSky(parseInt(e.target.value));
+      let rawVal = parseInt(e.target.value);
+      let targetVal = rawVal;
+
+      // Magnetic attraction to 4:20 PM (980 minutes)
+      if (Math.abs(rawVal - BIRTH_TIME) <= SNAP_THRESHOLD) {
+        targetVal = BIRTH_TIME;
+        slider.value = BIRTH_TIME;
+
+        if (!isMagnetLocked) {
+          isMagnetLocked = true;
+          slider.classList.add('magnetic-locked');
+          setTimeout(() => slider.classList.remove('magnetic-locked'), 800);
+          triggerBirthCelebration();
+        }
+      } else {
+        if (Math.abs(rawVal - BIRTH_TIME) > SNAP_THRESHOLD + 15) {
+          isMagnetLocked = false;
+        }
+      }
+
+      updateSky(targetVal);
     });
+
+    // Jump to 4:20 PM Birth Moment button handler
+    if (birthJumpBtn) {
+      birthJumpBtn.addEventListener('click', () => {
+        let startVal = parseInt(slider.value);
+        let endVal = 980; // 4:20 PM
+        let startTime = null;
+        let duration = 650; // ms
+
+        function step(timestamp) {
+          if (!startTime) startTime = timestamp;
+          let progress = Math.min((timestamp - startTime) / duration, 1);
+          let easeProgress = 1 - Math.pow(1 - progress, 3);
+          let currentVal = Math.round(startVal + (endVal - startVal) * easeProgress);
+          slider.value = currentVal;
+          updateSky(currentVal);
+
+          if (progress < 1) {
+            requestAnimationFrame(step);
+          } else {
+            isMagnetLocked = true;
+            triggerBirthCelebration();
+          }
+        }
+        requestAnimationFrame(step);
+      });
+    }
 
     // Redraw on resize
     let resizeTimer;
@@ -748,8 +947,9 @@
       }, 100);
     });
 
-    // Start initial state at 10:00 PM (1320 minutes)
-    updateSky(1320);
+    // Start initial slider state at 12:00 AM (0 minutes)
+    slider.value = 0;
+    updateSky(0);
   }
 
   /* ─── RENDER: WORLD LEADERS ─────────────────────────────── */

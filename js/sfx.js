@@ -305,6 +305,108 @@ const SFX = (() => {
     osc.stop(now + 0.06);
   }
 
+  /* ─── MATCHBOX STRIKE (Ultra-realistic Matchstick friction & ignition sound) ─── */
+  function matchbox() {
+    if (!isReady()) unlock();
+    if (!isReady()) return;
+
+    const now = audioCtx.currentTime;
+
+    // 1. Harsh friction drag (wooden matchstick tip scraping across phosphorus grit strip)
+    const scrapeDur = 0.16;
+    const scrapeBufSize = audioCtx.sampleRate * scrapeDur;
+    const scrapeBuf = audioCtx.createBuffer(1, scrapeBufSize, audioCtx.sampleRate);
+    const scrapeData = scrapeBuf.getChannelData(0);
+    for (let i = 0; i < scrapeBufSize; i++) {
+      const t = i / scrapeBufSize;
+      const noise = (Math.random() * 2 - 1);
+      const grit = (i % 80 < 40 ? 1 : 0.4);
+      scrapeData[i] = noise * grit * Math.sin(t * Math.PI * 0.9);
+    }
+
+    const scrapeSource = audioCtx.createBufferSource();
+    scrapeSource.buffer = scrapeBuf;
+
+    const scrapeFilter = audioCtx.createBiquadFilter();
+    scrapeFilter.type = 'highpass';
+    scrapeFilter.frequency.setValueAtTime(2500, now);
+    scrapeFilter.frequency.exponentialRampToValueAtTime(5200, now + scrapeDur);
+    scrapeFilter.Q.value = 3.5;
+
+    const scrapeGain = audioCtx.createGain();
+    scrapeGain.gain.setValueAtTime(0.45, now);
+    scrapeGain.gain.exponentialRampToValueAtTime(0.001, now + scrapeDur);
+
+    scrapeSource.connect(scrapeFilter);
+    scrapeFilter.connect(scrapeGain);
+    scrapeGain.connect(masterGain);
+    scrapeSource.start(now);
+
+    // 2. Phosphorus Spark Crackle (rapid micro pops)
+    const sparkTimes = [0.08, 0.11, 0.14, 0.17, 0.20];
+    sparkTimes.forEach((delay, idx) => {
+      const spark = audioCtx.createOscillator();
+      spark.type = 'triangle';
+      spark.frequency.setValueAtTime(3200 + idx * 400, now + delay);
+      spark.frequency.exponentialRampToValueAtTime(400, now + delay + 0.02);
+
+      const sparkGain = audioCtx.createGain();
+      sparkGain.gain.setValueAtTime(0.18 - idx * 0.03, now + delay);
+      sparkGain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.02);
+
+      spark.connect(sparkGain);
+      sparkGain.connect(masterGain);
+      spark.start(now + delay);
+      spark.stop(now + delay + 0.03);
+    });
+
+    // 3. Flame Ignition Woosh (oxygen surge + flame flare)
+    const igniteDelay = 0.12;
+    const igniteDur = 0.55;
+    const igniteBufSize = audioCtx.sampleRate * igniteDur;
+    const igniteBuf = audioCtx.createBuffer(1, igniteBufSize, audioCtx.sampleRate);
+    const igniteData = igniteBuf.getChannelData(0);
+    for (let i = 0; i < igniteBufSize; i++) {
+      const progress = i / igniteBufSize;
+      igniteData[i] = (Math.random() * 2 - 1) * Math.pow(1 - progress, 2.2);
+    }
+
+    const igniteSource = audioCtx.createBufferSource();
+    igniteSource.buffer = igniteBuf;
+
+    const igniteFilter = audioCtx.createBiquadFilter();
+    igniteFilter.type = 'lowpass';
+    igniteFilter.frequency.setValueAtTime(1600, now + igniteDelay);
+    igniteFilter.frequency.exponentialRampToValueAtTime(250, now + igniteDelay + igniteDur);
+    igniteFilter.Q.value = 2;
+
+    const igniteGain = audioCtx.createGain();
+    igniteGain.gain.setValueAtTime(0, now);
+    igniteGain.gain.linearRampToValueAtTime(0.5, now + igniteDelay + 0.05);
+    igniteGain.gain.exponentialRampToValueAtTime(0.001, now + igniteDelay + igniteDur);
+
+    igniteSource.connect(igniteFilter);
+    igniteFilter.connect(igniteGain);
+    igniteGain.connect(masterGain);
+    igniteSource.start(now + igniteDelay);
+
+    // 4. Warm Ignition Sub-Pop
+    const pop = audioCtx.createOscillator();
+    pop.type = 'sine';
+    pop.frequency.setValueAtTime(280, now + igniteDelay);
+    pop.frequency.exponentialRampToValueAtTime(55, now + igniteDelay + 0.15);
+
+    const popGain = audioCtx.createGain();
+    popGain.gain.setValueAtTime(0, now);
+    popGain.gain.setValueAtTime(0.3, now + igniteDelay);
+    popGain.gain.exponentialRampToValueAtTime(0.001, now + igniteDelay + 0.15);
+
+    pop.connect(popGain);
+    popGain.connect(masterGain);
+    pop.start(now + igniteDelay);
+    pop.stop(now + igniteDelay + 0.18);
+  }
+
   /* ─── Tick Toggle ────────────────────────────────────────────── */
   function setTickEnabled(enabled) {
     tickEnabled = enabled;
@@ -320,6 +422,7 @@ const SFX = (() => {
     tick,
     chime,
     whoosh,
+    matchbox,
     digitBlip,
     setTickEnabled,
   };

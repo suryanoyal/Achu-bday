@@ -11,9 +11,11 @@ const CakeBlowSystem = (() => {
   let blownOut = false;
   let onCompleteCallback = null;
 
-  function renderCakeScreen(containerElement, onComplete) {
+  function renderCakeScreen(containerElement, onComplete, startUnlit = true) {
     onCompleteCallback = onComplete;
     blownOut = false;
+
+    const unlitClass = startUnlit ? 'unlit' : '';
 
     containerElement.innerHTML = `
       <div class="cake-screen-container">
@@ -24,7 +26,7 @@ const CakeBlowSystem = (() => {
           <div class="candles-row">
             <div class="candle">
               <div class="candle-wick"></div>
-              <div class="flame-container" id="flame-1">
+              <div class="flame-container ${unlitClass}" id="flame-1">
                 <div class="flame-glow"></div>
                 <div class="flame"></div>
               </div>
@@ -32,7 +34,7 @@ const CakeBlowSystem = (() => {
             </div>
             <div class="candle">
               <div class="candle-wick"></div>
-              <div class="flame-container" id="flame-2">
+              <div class="flame-container ${unlitClass}" id="flame-2">
                 <div class="flame-glow"></div>
                 <div class="flame"></div>
               </div>
@@ -40,7 +42,7 @@ const CakeBlowSystem = (() => {
             </div>
             <div class="candle">
               <div class="candle-wick"></div>
-              <div class="flame-container" id="flame-3">
+              <div class="flame-container ${unlitClass}" id="flame-3">
                 <div class="flame-glow"></div>
                 <div class="flame"></div>
               </div>
@@ -111,8 +113,8 @@ const CakeBlowSystem = (() => {
       if (!analyser) {
         const source = audioCtx.createMediaStreamSource(audioStream);
         analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
-        analyser.smoothingTimeConstant = 0.3;
+        analyser.fftSize = 512;
+        analyser.smoothingTimeConstant = 0.2;
         source.connect(analyser);
       }
 
@@ -120,46 +122,62 @@ const CakeBlowSystem = (() => {
       const dataArray = new Uint8Array(bufferLength);
       let blowSustainedFrames = 0;
       let calibrationFrames = 0;
-      let ambientNoiseFloor = 20;
+      let ambientNoiseFloor = 15;
 
       function checkAudio() {
         if (blownOut) return;
 
         analyser.getByteFrequencyData(dataArray);
 
-        // Focus on low-mid frequency bins (plosive breath/wind turbulence noise)
-        // Bins 0..16 represent 0Hz to ~1.3kHz where blowing air has strong energy
-        let lowFreqSum = 0;
-        const lowBinsCount = Math.floor(bufferLength * 0.35); // lower 35% of spectrum
-        for (let i = 0; i < lowBinsCount; i++) {
-          lowFreqSum += dataArray[i];
+        // 1. Low Voice/Vowel Band (100Hz - 1000Hz): Speech formants
+        let lowSum = 0;
+        const lowStart = 1;
+        const lowEnd = Math.floor(bufferLength * 0.06); // ~1000Hz
+        for (let i = lowStart; i < lowEnd; i++) {
+          lowSum += dataArray[i];
         }
-        const lowFreqAverage = lowFreqSum / lowBinsCount;
+        const lowAvg = lowSum / (lowEnd - lowStart);
 
-        // Calibrate ambient noise floor for the first 25 frames (~400ms)
+        // 2. High Wind Friction Band (2200Hz - 7500Hz): Blowing "Uff" turbulent noise
+        let highSum = 0;
+        const highStart = Math.floor(bufferLength * 0.14); // ~2200Hz
+        const highEnd = Math.floor(bufferLength * 0.45);   // ~7500Hz
+        for (let i = highStart; i < highEnd; i++) {
+          highSum += dataArray[i];
+        }
+        const highAvg = highSum / (highEnd - highStart);
+
+        // Calibrate ambient noise floor for initial 25 frames (~400ms)
         if (calibrationFrames < 25) {
           calibrationFrames++;
-          ambientNoiseFloor = Math.max(ambientNoiseFloor, lowFreqAverage);
+          ambientNoiseFloor = Math.max(ambientNoiseFloor, highAvg);
           animFrameId = requestAnimationFrame(checkAudio);
           return;
         }
 
-        // Update visual mic meter bar relative to dynamic range
+        // Spectral Ratio: High Friction Noise vs Low Vocal Formants
+        // Normal Speech talking has ratio < 0.40. Blowing "uff" sound has ratio > 0.55
+        const blowNoiseRatio = highAvg / (lowAvg + 1);
+
+        // Update visual mic meter bar for blowing intensity
         const meterFill = document.getElementById('mic-meter-fill');
         if (meterFill) {
-          const effectiveVal = Math.max(0, lowFreqAverage - ambientNoiseFloor);
-          const pct = Math.min(100, Math.max(0, (effectiveVal / 70) * 100));
+          const effectiveVal = Math.max(0, highAvg - ambientNoiseFloor);
+          const pct = Math.min(100, Math.max(0, (effectiveVal / 60) * 100));
           meterFill.style.width = pct + '%';
         }
 
-        // Blow detection threshold:
-        // Must exceed both absolute threshold (75) and be significantly above ambient noise floor (+45)
-        const blowThreshold = Math.max(75, ambientNoiseFloor + 45);
+        // Strict "Uff" / Blowing Sound Criteria:
+        // - High frequency air friction energy > 48
+        // - High frequency energy significantly above ambient noise (+28)
+        // - High/Low Noise ratio > 0.52 (filters out human vocal speech, singing, talking)
+        const isBlowingSound = (highAvg > 48) && 
+                               (highAvg > ambientNoiseFloor + 28) && 
+                               (blowNoiseRatio > 0.52);
 
-        if (lowFreqAverage > blowThreshold) {
+        if (isBlowingSound) {
           blowSustainedFrames++;
-          // Require sustained blow for ~150-200ms (10 consecutive frames at 60fps)
-          if (blowSustainedFrames >= 10) {
+          if (blowSustainedFrames >= 8) {
             triggerCandleExtinguish();
             return;
           }
@@ -232,10 +250,23 @@ const CakeBlowSystem = (() => {
     }
   }
 
+  function lightCandle(index) {
+    const flame = document.getElementById(`flame-${index}`);
+    if (flame) {
+      flame.classList.remove('unlit');
+    }
+  }
+
+  function lightAllCandles() {
+    [1, 2, 3].forEach(i => lightCandle(i));
+  }
+
   return {
     renderCakeScreen,
     triggerCandleExtinguish,
     stopMic,
     requestMicPermission,
+    lightCandle,
+    lightAllCandles,
   };
 })();

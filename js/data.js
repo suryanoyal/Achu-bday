@@ -45,6 +45,7 @@ const BIRTHDAY_DATA = {
     description: "A slender crescent — the moon was just beginning its journey, much like you."
   },
   sky: {
+    birthTime: "4:20 PM IST",
     sunrise: "5:58 AM IST",
     sunset: "6:38 PM IST",
     dayLength: "12 hours 40 minutes",
