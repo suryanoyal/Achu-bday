@@ -122,9 +122,9 @@ const CountdownTimer = (() => {
       return;
     }
 
-    // Check if birthday has already passed
+    // Check if birthday has already passed — still show celebration
     if (isBirthdayTime()) {
-      hideCountdown();
+      revealBirthdayCelebration();
       return;
     }
 
