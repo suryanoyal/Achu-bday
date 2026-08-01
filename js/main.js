@@ -132,6 +132,12 @@
     const icon = document.getElementById('music-icon');
     if (!audio) return;
 
+    // Unlock BGM and show toggle on first play (after candle blow)
+    window.bgmUnlocked = true;
+    if (toggle) {
+      toggle.classList.add('visible');
+    }
+
     audio.volume = 0.3;
     audio.play().then(() => {
       if (toggle) toggle.classList.add('playing');
@@ -156,23 +162,15 @@
 
     if (!toggle || !audio) return;
 
-    // Show the toggle button
-    setTimeout(() => toggle.classList.add('visible'), 1000);
+    // BGM is locked until candle is blown — window.playMusic() sets this flag
+    window.bgmUnlocked = false;
 
-    let userInteracted = false;
-
-    // Try to play on first user interaction
-    function tryAutoPlay() {
-      if (userInteracted) return;
-      userInteracted = true;
-      window.playMusic();
-      document.removeEventListener('click', tryAutoPlay);
-    }
-
-    document.addEventListener('click', tryAutoPlay, { once: false });
+    // Show the toggle button only after BGM is unlocked (candle blown)
+    // The visibility will be triggered when playMusic is first called
 
     toggle.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (!window.bgmUnlocked) return; // Ignore clicks before candle is blown
       if (!audio.paused) {
         window.pauseMusic();
       } else {
